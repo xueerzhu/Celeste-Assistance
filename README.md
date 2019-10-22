@@ -1,2 +1,2 @@
 # Celeste-Assistance
-Game Assistance Toolkit for Celeste
+Game Assistance AI Toolkit for Celeste
