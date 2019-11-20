@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 public class PhysicsSceneManager : MonoBehaviour
 {
 
-    public GameObject objectsToSpawn;
+    public GameObject mainBall;
     public GameObject slopesToSpawn;
     public GameObject trailToSpawn;
 
@@ -30,16 +30,16 @@ public class PhysicsSceneManager : MonoBehaviour
     {
         SceneManager.SetActiveScene(physicsScene);
 
-        go =  GameObject.Instantiate(objectsToSpawn, objectsToSpawn.transform.position, Quaternion.identity);
+        go =  GameObject.Instantiate(mainBall, mainBall.transform.position, Quaternion.identity);
         go.transform.name = "ReferencePlayer";
         go.GetComponent<Rigidbody2D>().gravityScale = 1;
 
-        // go.GetComponent<Collision>().enabled = true;
-        // go.GetComponent<Movement>().enabled = true;
-        // go.GetComponent<BetterJumping>().enabled = true;
+        go.GetComponent<Collision>().enabled = true;
+        go.GetComponent<Movement>().enabled = true;
+        go.GetComponent<BetterJumping>().enabled = true;
 
         //Destroy(go.GetComponent<MeshRenderer>());
-        Destroy(go.GetComponentInChildren<SpriteRenderer>());
+        //Destroy(go.GetComponentInChildren<SpriteRenderer>());
 
         GameObject slopes =  GameObject.Instantiate(slopesToSpawn, slopesToSpawn.transform.position, Quaternion.identity);
         slopes.transform.name = "ReferenceLevel";
@@ -48,7 +48,8 @@ public class PhysicsSceneManager : MonoBehaviour
     int counter = 0;
     void FixedUpdate(){
             counter++;
-            if (counter % 10 == 0){
+            if (counter % 2 == 0)
+            {
                 GameObject g =  GameObject.Instantiate(trailToSpawn, go.transform.position, Quaternion.identity);
             }
             physicsScene.GetPhysicsScene2D().Simulate(Time.deltaTime * 2); 

@@ -473,8 +473,8 @@ MonoBehaviour:
   objectsToSpawn: {fileID: 1810274486}
   slopesToSpawn: {fileID: 992694332}
   originPos: {fileID: 880913071}
-  simulationSpeed: 0
-  simulationSteps: 30
+  simulationSteps: 1000
+  reachedSteadyState: 0
 --- !u!4 &858245117
 Transform:
   m_ObjectHideFlags: 0

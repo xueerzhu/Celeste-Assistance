@@ -2207,7 +2207,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 76baec6faf66d4db58d80c4ba1e8707e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectsToSpawn: {fileID: 213030893}
+  mainBall: {fileID: 213030893}
   slopesToSpawn: {fileID: 1059521543}
   trailToSpawn: {fileID: 1833579168}
 --- !u!4 &187310043
@@ -22132,7 +22132,7 @@ Rigidbody2D:
   m_Interpolate: 0
   m_SleepingMode: 1
   m_CollisionDetection: 0
-  m_Constraints: 0
+  m_Constraints: 3
 --- !u!212 &1833579171
 SpriteRenderer:
   m_ObjectHideFlags: 0
