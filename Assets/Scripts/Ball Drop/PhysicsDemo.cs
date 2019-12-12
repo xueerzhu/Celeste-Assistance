@@ -5,14 +5,21 @@ using UnityEngine.SceneManagement;
 public class PhysicsDemo : MonoBehaviour
 {
 
-    /// PUBLIC
+    [Header("Public References")]
     public GameObject ballToSpawn;
     public GameObject slopesToSpawn;
     public GameObject originPos;
+
+    [Space]
+    [Header("Parameters")]
     public int simulationSteps = 0;
-    public bool reachedSteadyState = false;
     public float horizontalSpeed = 10;
     public  Vector2 jumpVelocity;
+
+    [Space]
+    [Header("Bool")]
+    public bool reachedSteadyState = false;
+    public bool ballMoved = false; // ballMoved is the dirty flag to run physics scene whenever main scene ball pos changed
 
     /// PRIVATE
     private Scene mainScene;
@@ -23,7 +30,6 @@ public class PhysicsDemo : MonoBehaviour
     private Rigidbody2D mainSceneBallRigidbody2D;
     private PhysicsScene2D activePhysicsScene2D;
     private bool isJumpPressed = false;
-    private bool ballMoved = false; // ballMoved is the dirty flag to run physics scene whenever main scene ball pos changed
     private float horizontalInput;
     private Vector2 horizontalDir;
 
@@ -48,9 +54,10 @@ public class PhysicsDemo : MonoBehaviour
         go =  GameObject.Instantiate(ballToSpawn, ballToSpawn.transform.position, Quaternion.identity);
         go.transform.name = "ReferenceBall";
 
-        // cache physics scene
+        // cache physics scene references 
         ballSpriteRenderer = go.GetComponent<SpriteRenderer>();
         referenceBallRigidbody2D = go.GetComponent<Rigidbody2D>();
+        referenceBallRigidbody2D.constraints =  RigidbodyConstraints2D.None;
         activePhysicsScene2D = physicsScene.GetPhysicsScene2D();
         ballSpriteRenderer.color = Color.red;
         //ballSpriteRenderer.enabled = false;
@@ -79,23 +86,22 @@ public class PhysicsDemo : MonoBehaviour
 
             if (horizontalInput > 0.1 || horizontalInput < -0.1)
             {
-                Debug.Log("main scene ball walk called, ball Moved = " + ballMoved);
                 ballMoved = true;
                 Walk(horizontalDir);
             }
             
 
-            if (isJumpPressed == true)
-            {
-                Debug.Log("jump pressed");
-                Jump(referenceBallRigidbody2D);
-            }
+            // if (isJumpPressed == true)
+            // {
+            //     Jump(referenceBallRigidbody2D);
+            // }
 
             // if ball pos changed, and current sim has stopped, resimulate physics
             if (ballMoved == true && referenceBallRigidbody2D.velocity == Vector2.zero)
             {
+                
                 go.transform.position = ballToSpawn.transform.position;
-                Jump(referenceBallRigidbody2D);
+                //Jump(referenceBallRigidbody2D);
                 ballMoved = false;
             }       
         
@@ -118,7 +124,6 @@ public class PhysicsDemo : MonoBehaviour
 
     private void Jump(Rigidbody2D rb)
     {
-        //
         // a jump at 5,5, mimicking a starting horizontal initial velocity, to make the landign position more easier to debug
         rb.velocity += jumpVelocity;
     }
@@ -131,7 +136,4 @@ public class PhysicsDemo : MonoBehaviour
 
     
 }
-
-
-// problem: update is happening every frame, meanign ball is moving every frame. Resimulating every frame
 
