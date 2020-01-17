@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 public class PhysicsSceneManager : MonoBehaviour
 {
@@ -52,7 +52,6 @@ public class PhysicsSceneManager : MonoBehaviour
             {
                 GameObject g =  GameObject.Instantiate(trailToSpawn, go.transform.position, Quaternion.identity);
             }
-            physicsScene.GetPhysicsScene2D().Simulate(Time.deltaTime * 2); 
+            physicsScene.GetPhysicsScene2D().Simulate(Time.deltaTime * 2);
     }
 }
-

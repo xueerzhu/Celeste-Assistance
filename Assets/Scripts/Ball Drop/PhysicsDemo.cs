@@ -1,6 +1,6 @@
 ﻿
 using UnityEngine;
-using UnityEngine.SceneManagement; 
+using UnityEngine.SceneManagement;
 
 public class PhysicsDemo : MonoBehaviour
 {
@@ -48,13 +48,13 @@ public class PhysicsDemo : MonoBehaviour
 
     public void PreparePhysicsScene()
     {
-        // There must always be one Scene marked as the active Scene. 
+        // There must always be one Scene marked as the active Scene.
         SceneManager.SetActiveScene(physicsScene);
 
         go =  GameObject.Instantiate(ballToSpawn, ballToSpawn.transform.position, Quaternion.identity);
         go.transform.name = "ReferenceBall";
 
-        // cache physics scene references 
+        // cache physics scene references
         ballSpriteRenderer = go.GetComponent<SpriteRenderer>();
         referenceBallRigidbody2D = go.GetComponent<Rigidbody2D>();
         referenceBallRigidbody2D.constraints =  RigidbodyConstraints2D.None;
@@ -89,7 +89,7 @@ public class PhysicsDemo : MonoBehaviour
                 ballMoved = true;
                 Walk(horizontalDir);
             }
-            
+
 
             // if (isJumpPressed == true)
             // {
@@ -99,12 +99,12 @@ public class PhysicsDemo : MonoBehaviour
             // if ball pos changed, and current sim has stopped, resimulate physics
             if (ballMoved == true && referenceBallRigidbody2D.velocity == Vector2.zero)
             {
-                
+
                 go.transform.position = ballToSpawn.transform.position;
                 //Jump(referenceBallRigidbody2D);
                 ballMoved = false;
-            }       
-        
+            }
+
     }
     private void Update() {
         // replay
@@ -134,6 +134,5 @@ public class PhysicsDemo : MonoBehaviour
         mainSceneBallRigidbody2D.velocity = new Vector2(dir.x * horizontalSpeed, mainSceneBallRigidbody2D.velocity.y);
     }
 
-    
-}
 
+}

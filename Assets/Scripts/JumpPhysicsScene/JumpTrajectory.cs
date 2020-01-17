@@ -10,7 +10,7 @@ public struct RegisteredJumps
 }
 public class JumpTrajectory : MonoBehaviour
 {
-    public static bool jumping; 
+    public static bool jumping;
 
     public GameObject jump;
     public Transform referenceJump;
@@ -53,7 +53,7 @@ public class JumpTrajectory : MonoBehaviour
             }
             else
             {
-                jumps.real = jump; 
+                jumps.real = jump;
             }
 
             allJumps[jump.gameObject.name] = jumps;
@@ -79,8 +79,8 @@ public class JumpTrajectory : MonoBehaviour
             var jumps = jumpType.Value;  // RegisteredJumps type
             JumpGizmo hidden = jumps.hidden;
 
-            GameObject g = GameObject.Instantiate(marker, hidden.transform.position, Quaternion.identity); 
-            //GameObject g = GameObject.Instantiate(marker, hidden.transform.position) as GameObject; 
+            GameObject g = GameObject.Instantiate(marker, hidden.transform.position, Quaternion.identity);
+            //GameObject g = GameObject.Instantiate(marker, hidden.transform.position) as GameObject;
             g.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
             markers.Add(g);
         }
@@ -89,7 +89,7 @@ public class JumpTrajectory : MonoBehaviour
     {
         SyncJumps();
         allJumps["ReferenceJump"].hidden.transform.rotation = referenceJump.transform.rotation;
-        allJumps["ReferenceJump"].hidden.GetComponent<Rigidbody2D>().velocity = referenceJump.transform.TransformDirection(Vector2.up * 15f); 
+        allJumps["ReferenceJump"].hidden.GetComponent<Rigidbody2D>().velocity = referenceJump.transform.TransformDirection(Vector2.up * 15f);
         //allJumps["ReferenceJump"].hidden.GetComponent<Rigidbody2D>().useGravity = true;
 
         int steps = (int)(2f / Time.fixedDeltaTime);
