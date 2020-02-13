@@ -80,7 +80,7 @@ public class Movement : MonoBehaviour
             wallJumped = false;
             GetComponent<BetterJumping>().enabled = true;
         }
-        
+
         if (wallGrab && !isDashing)
         {
             rb.gravityScale = 0;
