@@ -30054,6 +30054,7 @@ GameObject:
   - component: {fileID: 1685797298}
   - component: {fileID: 1685797300}
   - component: {fileID: 1685797301}
+  - component: {fileID: 1685797302}
   m_Layer: 0
   m_Name: Star
   m_TagString: Goal
@@ -30171,6 +30172,19 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 0
+--- !u!114 &1685797302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1685797297}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4a383c0216d4e94ba42b732a4de3345, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  demo: {fileID: 1617902331}
 --- !u!1 &1977723615
 GameObject:
   m_ObjectHideFlags: 0
