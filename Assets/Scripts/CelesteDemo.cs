@@ -144,22 +144,12 @@ public class CelesteDemo : MonoBehaviour
         rb2d.velocity = dir * horizontalSpeed;
     }
 
-    private void Replay()
+    public void Replay()
     {
         //Vector2 action = actions[0];
         //Debug.Log(action);
         //actions.RemoveAt(0);
         //mainBallRigidbody2D.velocity = action;
-    }
-
-    void OnCollisionEnter2D(Collision2D collision)
-    {
-        Debug.Log("collide");
-        // if (collision.gameObject.tag == "Goal")
-        // {
-            reachedGoal = true;
-            Replay();
-        //}
     }
 }
 
