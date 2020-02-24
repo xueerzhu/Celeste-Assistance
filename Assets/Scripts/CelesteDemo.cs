@@ -151,6 +151,31 @@ public class CelesteDemo : MonoBehaviour
         //actions.RemoveAt(0);
         //mainBallRigidbody2D.velocity = action;
     }
+
+    /* _________Brainstorming_________
+    Everytime a simulation step is run, it creates an Actions obj
+    and is stored in the list to later be iterated through for the
+    real player. Each of the variables correlates to an action it can perform.
+    Since the intensity of the action depends on how long the button is held,
+    the variables should be bools to indicate whether the button is held in the
+    current frame. This makes sure there is little to no error when replaying
+    the actions for the real player
+
+    left, right, jump, dash, climb
+    */
+    public struct Actions
+    {
+        public bool left, right, jump, dash, climb;
+
+        public Actions(bool l = false, bool r = false, bool j = false, bool d = false, bool c = false)
+        {
+            left = l;
+            right = r;
+            jump = j;
+            dash = d;
+            climb = c;
+        }
+    }
 }
 
 // CODE FROM PHYSICS DEMO WITH THE BALL AND STAR
