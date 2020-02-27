@@ -151,7 +151,7 @@ public class SearchandReplay : MonoBehaviour {
                 Action act = actionReplayQueue.Dequeue();
                 print("Action: " + act.actionType.ToString() + " has been taken and " + actionReplayQueue.Count + " remain.");
                 TakeAction(act);
-                
+
                 // This line is possibly wrong! Might need to wait for end of fixed update.
                 yield return null;
             } else {
@@ -172,6 +172,7 @@ public class SearchandReplay : MonoBehaviour {
             case ActionType.WalkL:
                 activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier));
                 break;
+                
             case ActionType.WalkR:
                 activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier));
                 break;
