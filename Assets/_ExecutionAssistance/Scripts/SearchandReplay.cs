@@ -75,6 +75,11 @@ public class SearchandReplay : MonoBehaviour {
             dashed = d;
             climbing = c;
         }
+
+        public void print()
+        {
+            Debug.Log("Pos: " + madelinePos + " Vel: " + madelineVel + " Jump: " + jumped + " Dash: " + dashed + " Climb: " + climbing);
+        }
     }
 
     private void Start() {
@@ -134,17 +139,17 @@ public class SearchandReplay : MonoBehaviour {
             for (int i = 0; i < simulationSteps; i++) {
                 // Here is an example action. In this case just moving right for 1 frame.
 
+                //stateReplayQueue = RunAStar();
 
-                stateReplayQueue = RunAStar();
+                //actionReplayQueue.Enqueue(new Action(ActionType.WalkR, 1));
 
-                actionReplayQueue.Enqueue(new Action(ActionType.WalkR, 1));
-
-                // !!! 
+                // !!!
                 // In order to record the state correctly, we need to know if madeline can Dash/Jump whether she is climbing.
                 // There most likely are varibles in the Movement script that correspond to these three bools directly,
                 // find them and add them to current state! If there doesn't exist a simple bool just make it (isgrounded vs hasjumped can be combined i
                 // into can jmp
                 State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
+                currentState.print();
                 stateReplayQueue.Enqueue(currentState);
 
                 // Take the action on the simulatedPlayer...
@@ -155,16 +160,17 @@ public class SearchandReplay : MonoBehaviour {
                 simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
             }
         }
+        //Debug.Log(stateReplayQueue.Count);
     }
 
 
     // We need to implement this function now.
     public Queue<State> RunAStar() {
         Queue<State> selectedPath = new Queue<State>();
-        
+
         // while goal not reached keep searching
             // goal reached colliding with goal (there is a goal script that checks for that)
-        //Have a sorted queue, that sorts the states using (cost of getting there + heuristic) 
+        //Have a sorted queue, that sorts the states using (cost of getting there + heuristic)
         // check out the A* psudocode and message me if you need help.
 
         return selectedPath;
@@ -173,10 +179,11 @@ public class SearchandReplay : MonoBehaviour {
 
     public IEnumerator ReplayFromState() {
         isReplaying = true;
-        print("Replay started with " + actionReplayQueue.Count + " actions");
+        //print("Replay started with " + actionReplayQueue.Count + " actions");
 
         // Replay as long as there is something to replay in the Queue.
         while (stateReplayQueue.Count > 0) {
+            print("Replay started with " + stateReplayQueue.Count + " state");
             State currReplayState = stateReplayQueue.Dequeue();
             UpdateMainPlayer(currReplayState);
             yield return new WaitForFixedUpdate();
@@ -191,91 +198,91 @@ public class SearchandReplay : MonoBehaviour {
 
         // set the flags here as well.
     }
-
-    public IEnumerator Replay() {
-        isReplaying = true;
-        print("Replay started with " + actionReplayQueue.Count + " actions");
-
-        // Replay as long as there is something to replay in the Queue.
-        while (actionReplayQueue.Count > 0) {
-
-            // If there is no action that is being taken (because an action can be multiple frames)
-            // pop the next action from the queue, and do it on the main player.
-            if (activeAction == null) {
-                Action act = actionReplayQueue.Dequeue();
-                print("Action: " + act.actionType.ToString() + " has been taken and " + actionReplayQueue.Count + " remain.");
-                TakeAction(act);
-                
-                // This line is possibly wrong! Might need to wait for end of fixed update.
-                yield return new WaitForEndOfFrame();
-            } else {
-                print("Action already active");
-                // This line is possibly wrong! Might need to wait for end of fixed update.
-                yield return new WaitForEndOfFrame();
-            }
-        }
-        isReplaying = false;
-        replayDone = true;
-    }
-
-    Coroutine activeAction = null;
-    // Given an action decides how to make the player game object execute it.
-    void TakeAction(Action action) {
-        
-        // StartCoroutine returns an Coroutine object. We use that to indiciate an action is underway.
-        switch (action.actionType) {
-            case ActionType.WalkL:
-                activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier));
-                break;
-            case ActionType.WalkR:
-                activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier));
-                break;
-
-            case ActionType.Jump:
-                activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier));
-                break;
-
-            case ActionType.Dash:
-                Vector2 dir = DashDirectionDict[action.modifier];
-                activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5));
-                break;
-        }
-    }
-
-    // The three different actions that are slightly different.
-    IEnumerator ExecuteWalkForNFrames(int dir, int frameCount) {
-        for (int i = 0; i < frameCount; i++) {
-            Vector2 walkDir = new Vector2(dir, 0);
-            playerMovement.Walk(walkDir);
-
-            // This line might be problematic!
-            yield return new WaitForFixedUpdate();
-
-            //yield return new WaitForSeconds(Time.fixedDeltaTime);
-        }
-        activeAction = null;
-        yield return null;
-    }
-
-    IEnumerator ExecuteJumpForNFrames(int frameCount) {
-        for (int i = 0; i < frameCount; i++) {
-            if (!playerMovement.wallGrab) {
-                playerMovement.Jump(Vector2.up, false);
-            } else {
-                playerMovement.WallJump();
-            }
-            yield return new WaitForFixedUpdate();
-        }
-        activeAction = null;
-        yield return null;
-    }
-
-    IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount) {
-        playerMovement.Dash(dir.x, dir.y);
-        for (int i = 0; i < frameCount; i++) {
-            yield return new WaitForFixedUpdate();
-        }
-        activeAction = null;
-        yield return null;
-    }
 }
+//     public IEnumerator Replay() {
+//         isReplaying = true;
+//         //print("Replay started with " + actionReplayQueue.Count + " actions");
+//
+//         // Replay as long as there is something to replay in the Queue.
+//         while (actionReplayQueue.Count > 0) {
+//
+//             // If there is no action that is being taken (because an action can be multiple frames)
+//             // pop the next action from the queue, and do it on the main player.
+//             if (activeAction == null) {
+//                 Action act = actionReplayQueue.Dequeue();
+//                 print("Action: " + act.actionType.ToString() + " has been taken and " + actionReplayQueue.Count + " remain.");
+//                 TakeAction(act);
+//
+//                 // This line is possibly wrong! Might need to wait for end of fixed update.
+//                 yield return new WaitForEndOfFrame();
+//             } else {
+//                 print("Action already active");
+//                 // This line is possibly wrong! Might need to wait for end of fixed update.
+//                 yield return new WaitForEndOfFrame();
+//             }
+//         }
+//         isReplaying = false;
+//         replayDone = true;
+//     }
+//
+//     Coroutine activeAction = null;
+//     // Given an action decides how to make the player game object execute it.
+//     void TakeAction(Action action) {
+//
+//         // StartCoroutine returns an Coroutine object. We use that to indiciate an action is underway.
+//         switch (action.actionType) {
+//             case ActionType.WalkL:
+//                 activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier));
+//                 break;
+//             case ActionType.WalkR:
+//                 activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier));
+//                 break;
+//
+//             case ActionType.Jump:
+//                 activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier));
+//                 break;
+//
+//             case ActionType.Dash:
+//                 Vector2 dir = DashDirectionDict[action.modifier];
+//                 activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5));
+//                 break;
+//         }
+//     }
+//
+//     // The three different actions that are slightly different.
+//     IEnumerator ExecuteWalkForNFrames(int dir, int frameCount) {
+//         for (int i = 0; i < frameCount; i++) {
+//             Vector2 walkDir = new Vector2(dir, 0);
+//             playerMovement.Walk(walkDir);
+//
+//             // This line might be problematic!
+//             yield return new WaitForFixedUpdate();
+//
+//             //yield return new WaitForSeconds(Time.fixedDeltaTime);
+//         }
+//         activeAction = null;
+//         yield return null;
+//     }
+//
+//     IEnumerator ExecuteJumpForNFrames(int frameCount) {
+//         for (int i = 0; i < frameCount; i++) {
+//             if (!playerMovement.wallGrab) {
+//                 playerMovement.Jump(Vector2.up, false);
+//             } else {
+//                 playerMovement.WallJump();
+//             }
+//             yield return new WaitForFixedUpdate();
+//         }
+//         activeAction = null;
+//         yield return null;
+//     }
+//
+//     IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount) {
+//         playerMovement.Dash(dir.x, dir.y);
+//         for (int i = 0; i < frameCount; i++) {
+//             yield return new WaitForFixedUpdate();
+//         }
+//         activeAction = null;
+//         yield return null;
+//     }
+// }
