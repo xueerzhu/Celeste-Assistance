@@ -123,6 +123,7 @@ public class SearchandReplay : MonoBehaviour {
     }
 
     void FixedUpdate() {
+
         if (replayDone) {
             return;
         }
@@ -158,6 +159,7 @@ public class SearchandReplay : MonoBehaviour {
 
                 // and actually simualte the physics for it for 1 frame.
                 simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+
             }
         }
         //Debug.Log(stateReplayQueue.Count);
