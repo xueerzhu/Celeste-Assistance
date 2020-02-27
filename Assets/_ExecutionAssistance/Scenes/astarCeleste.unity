@@ -29694,7 +29694,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainPlayer: {fileID: 213030893}
   levelToCopy: {fileID: 1059521543}
-  simulationSteps: 55
+  simulationSteps: 1
   reachedGoal: 0
 --- !u!4 &1617902332
 Transform:

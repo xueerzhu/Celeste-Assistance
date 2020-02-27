@@ -10,6 +10,9 @@ public class SearchandReplay : MonoBehaviour {
     public GameObject mainPlayer;
     public GameObject levelToCopy;
 
+    Rigidbody2D mainPlayerRB;
+    Rigidbody2D simPlayerRB;
+
     [Space]
     [Header("Parameters")]
     public int simulationSteps = 0;
@@ -36,6 +39,7 @@ public class SearchandReplay : MonoBehaviour {
     [Space]
     [Header("Replay System")]
     private Queue<Action> actionReplayQueue = new Queue<Action>();
+    private Queue<State>  stateReplayQueue = new Queue<State>();
 
 
     Dictionary<int, Vector2> DashDirectionDict = new Dictionary<int, Vector2>();
@@ -95,6 +99,8 @@ public class SearchandReplay : MonoBehaviour {
         simMovement = simPlayer.GetComponent<Movement>();
         playerMovement = mainPlayer.GetComponent<Movement>();
 
+        mainPlayerRB = mainPlayer.GetComponent<Rigidbody2D>();
+        simPlayerRB = simPlayer.GetComponent<Rigidbody2D>();
     }
 
     public void PreparePhysicsScene() {
@@ -121,21 +127,69 @@ public class SearchandReplay : MonoBehaviour {
             // and you are not replaying.
             if (!isReplaying) {
                 // start the replay!
-                StartCoroutine(Replay());
+                StartCoroutine(ReplayFromState());
             }
         // Otherwise keep simulating the physics scene.
         } else {
             for (int i = 0; i < simulationSteps; i++) {
                 // Here is an example action. In this case just moving right for 1 frame.
+
+
+                stateReplayQueue = RunAStar();
+
                 actionReplayQueue.Enqueue(new Action(ActionType.WalkR, 1));
 
+                // !!! 
+                // In order to record the state correctly, we need to know if madeline can Dash/Jump whether she is climbing.
+                // There most likely are varibles in the Movement script that correspond to these three bools directly,
+                // find them and add them to current state! If there doesn't exist a simple bool just make it (isgrounded vs hasjumped can be combined i
+                // into can jmp
+                State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
+                stateReplayQueue.Enqueue(currentState);
+
                 // Take the action on the simulatedPlayer...
+                // We would be doing the search here.
                 simMovement.Walk(new Vector2(1, 0));
 
                 // and actually simualte the physics for it for 1 frame.
                 simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
             }
         }
+    }
+
+
+    // We need to implement this function now.
+    public Queue<State> RunAStar() {
+        Queue<State> selectedPath = new Queue<State>();
+        
+        // while goal not reached keep searching
+            // goal reached colliding with goal (there is a goal script that checks for that)
+        //Have a sorted queue, that sorts the states using (cost of getting there + heuristic) 
+        // check out the A* psudocode and message me if you need help.
+
+        return selectedPath;
+    }
+
+
+    public IEnumerator ReplayFromState() {
+        isReplaying = true;
+        print("Replay started with " + actionReplayQueue.Count + " actions");
+
+        // Replay as long as there is something to replay in the Queue.
+        while (stateReplayQueue.Count > 0) {
+            State currReplayState = stateReplayQueue.Dequeue();
+            UpdateMainPlayer(currReplayState);
+            yield return new WaitForFixedUpdate();
+        }
+        isReplaying = false;
+        replayDone = true;
+    }
+
+    void UpdateMainPlayer(State currState) {
+        mainPlayer.transform.position = currState.madelinePos;
+        //mainPlayerRB.velocity = currState.madelineVel;
+
+        // set the flags here as well.
     }
 
     public IEnumerator Replay() {
@@ -153,11 +207,11 @@ public class SearchandReplay : MonoBehaviour {
                 TakeAction(act);
                 
                 // This line is possibly wrong! Might need to wait for end of fixed update.
-                yield return null;
+                yield return new WaitForEndOfFrame();
             } else {
                 print("Action already active");
                 // This line is possibly wrong! Might need to wait for end of fixed update.
-                yield return null;
+                yield return new WaitForEndOfFrame();
             }
         }
         isReplaying = false;
@@ -167,6 +221,7 @@ public class SearchandReplay : MonoBehaviour {
     Coroutine activeAction = null;
     // Given an action decides how to make the player game object execute it.
     void TakeAction(Action action) {
+        
         // StartCoroutine returns an Coroutine object. We use that to indiciate an action is underway.
         switch (action.actionType) {
             case ActionType.WalkL:
