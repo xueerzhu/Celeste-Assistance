@@ -9,6 +9,7 @@ public class SearchandReplay : MonoBehaviour {
     [Header("Public References")]
     public GameObject mainPlayer;
     public GameObject levelToCopy;
+    public GameObject star;
 
     Rigidbody2D mainPlayerRB;
     Rigidbody2D simPlayerRB;
@@ -40,6 +41,7 @@ public class SearchandReplay : MonoBehaviour {
     [Header("Replay System")]
     private Queue<Action> actionReplayQueue = new Queue<Action>();
     private Queue<State>  stateReplayQueue = new Queue<State>();
+    private Queue<Vector2>  vectorReplayQueue = new Queue<Vector2>();
 
 
     Dictionary<int, Vector2> DashDirectionDict = new Dictionary<int, Vector2>();
@@ -137,10 +139,11 @@ public class SearchandReplay : MonoBehaviour {
             }
         // Otherwise keep simulating the physics scene.
         } else {
+            vectorReplayQueue = RunAStar();
             for (int i = 0; i < simulationSteps; i++) {
                 // Here is an example action. In this case just moving right for 1 frame.
 
-                //stateReplayQueue = RunAStar();
+
 
                 //actionReplayQueue.Enqueue(new Action(ActionType.WalkR, 1));
 
@@ -149,13 +152,13 @@ public class SearchandReplay : MonoBehaviour {
                 // There most likely are varibles in the Movement script that correspond to these three bools directly,
                 // find them and add them to current state! If there doesn't exist a simple bool just make it (isgrounded vs hasjumped can be combined i
                 // into can jmp
-                State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
-                currentState.print();
-                stateReplayQueue.Enqueue(currentState);
+                //State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
+                //currentState.print();
+                //stateReplayQueue.Enqueue(currentState);
 
                 // Take the action on the simulatedPlayer...
                 // We would be doing the search here.
-                simMovement.Walk(new Vector2(1, 0));
+            //    simMovement.Walk(new Vector2(1, 0));
 
                 // and actually simualte the physics for it for 1 frame.
                 simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
@@ -167,17 +170,92 @@ public class SearchandReplay : MonoBehaviour {
 
 
     // We need to implement this function now.
-    public Queue<State> RunAStar() {
-        Queue<State> selectedPath = new Queue<State>();
+    public Queue<Vector2> RunAStar() {
+        // Path -> Vector2, List of Vector2
+        Queue<Path> priorityQueue = new Queue<Path>();
+
+        // Starting state
+        //State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
+        priorityQueue.Enqueue(new Path(simPlayer.transform.position, new List<Vector2>()));
+
+        // Positions explored
+        List<Vector2> explored = new List<Vector2>();
+
+        // Successor positions
+        List<Vector2> movement = new List<Vector2>();
+        movement.Add(new Vector2(-1, 0));
+        movement.Add(new Vector2(1, 0));
+
+        // Keeps searching while it hasn't reached the goal
+        while (!reachedGoal)
+        {
+            // Heuristic as the distance between player and star
+            Vector2 heuristic = simPlayer.transform.position - star.transform.position;
+
+            Path currentPath = priorityQueue.Dequeue();
+            Vector2 currentPos = currentPath.position;
+
+            // Only searches through position if it hasn't been searched before
+            if (!explored.Contains(currentPos))
+            {
+                explored.Add(currentPos);
+
+                for (int i = 0; i < 2; i++)
+                {
+                    Vector2 newPos = currentPos;
+                    newPos += movement[i];
+
+                    if (!explored.Contains(newPos))
+                    {
+                        List<Vector2> tempPath = currentPath.prevPos;
+                        tempPath.Add(currentPos);
+
+                        Path newPath = new Path(newPos, tempPath);
+                        priorityQueue.Enqueue(newPath);
+                    }
+                }
+            }
+        }
 
         // while goal not reached keep searching
             // goal reached colliding with goal (there is a goal script that checks for that)
         //Have a sorted queue, that sorts the states using (cost of getting there + heuristic)
         // check out the A* psudocode and message me if you need help.
 
-        return selectedPath;
+        /*
+        frontier = util.PriorityQueue()
+        frontier.push((problem.startingState(), [], 0), 0)  # position, path, cost
+        explored = []   # Explored paths
+
+        while not frontier.isEmpty():
+            node, path, cost = frontier.pop()
+            if not node in explored:
+
+                # If the goal is found, return the path taken to the goal
+                if (problem.isGoal(node)):
+                    return path
+
+                explored.append(node)
+
+                # Only adds sucessor nodes, updated path, and cost if it hasn't been explored yet
+                for nextNode in problem.successorStates(node):
+                    if not nextNode[0] in explored:
+                        frontier.push((nextNode[0], path + [nextNode[1]], cost + nextNode[2]),
+                            cost + nextNode[2] + heuristic(nextNode[0], problem))
+        */
+        return null;
     }
 
+    public struct Path {
+        // One of the possible action types
+        public Vector2 position;
+        public List<Vector2> prevPos;
+
+        public Path(Vector2 pos, List<Vector2> prev) {
+            position = pos;
+            prevPos = prev;
+        }
+    }
 
     public IEnumerator ReplayFromState() {
         isReplaying = true;
@@ -201,6 +279,7 @@ public class SearchandReplay : MonoBehaviour {
         // set the flags here as well.
     }
 }
+
 //     public IEnumerator Replay() {
 //         isReplaying = true;
 //         //print("Replay started with " + actionReplayQueue.Count + " actions");

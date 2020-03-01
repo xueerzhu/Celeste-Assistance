@@ -4513,7 +4513,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 213030893}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.17, y: -0.18, z: 0}
+  m_LocalPosition: {x: -6, y: -0.89, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 205110260}
@@ -29745,6 +29745,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainPlayer: {fileID: 213030893}
   levelToCopy: {fileID: 1059521543}
+  star: {fileID: 0}
   simulationSteps: 1
   reachedGoal: 0
 --- !u!4 &1617902332
@@ -29839,7 +29840,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1685797297}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 6.54, y: -1.2, z: 0}
+  m_LocalPosition: {x: 6, y: -1, z: 0}
   m_LocalScale: {x: 0.061212566, y: 0.061212566, z: 0.061212566}
   m_Children: []
   m_Father: {fileID: 1059521545}
