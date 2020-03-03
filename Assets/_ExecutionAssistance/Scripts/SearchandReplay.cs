@@ -303,6 +303,13 @@ public class SearchandReplay : MonoBehaviour {
 
         // set the flags here as well.
     }
+
+    void RestoreState(State state){
+        //sets the current Unity state to the state
+        transform.position = state.pos;
+    }
+
+
 }
 
 //     public IEnumerator Replay() {
