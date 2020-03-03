@@ -46,6 +46,7 @@ public class SearchandReplay : MonoBehaviour {
 
     Dictionary<int, Vector2> DashDirectionDict = new Dictionary<int, Vector2>();
     public enum ActionType { WalkR, WalkL, Noop, Jump, Dash };
+    public enum ActionSet {WalkR, WalkL, Jump, DashUp, DashRight, DashLeft};
 
     public struct Action {
         // One of the possible action types
@@ -171,47 +172,57 @@ public class SearchandReplay : MonoBehaviour {
 
     // We need to implement this function now.
     public Queue<Vector2> RunAStar() {
-        // Path -> Vector2, List of Vector2
-        Queue<Path> priorityQueue = new Queue<Path>();
+        // Node -> Vector2, List of Vector2
+        Queue<Node> priorityQueue = new Queue<Node>();
 
         // Starting state
         //State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
-        priorityQueue.Enqueue(new Path(simPlayer.transform.position, new List<Vector2>()));
+        priorityQueue.Enqueue(new Node(simPlayer.transform.position, null));
 
         // Positions explored
         List<Vector2> explored = new List<Vector2>();
 
         // Successor positions
-        List<Vector2> movement = new List<Vector2>();
-        movement.Add(new Vector2(-1, 0));
-        movement.Add(new Vector2(1, 0));
+        List<Vector2> avaliableActions = new List<Vector2>();
+        avaliableActions.Add(new Vector2(-1, 0));
+        avaliableActions.Add(new Vector2(1, 0));
 
         // Keeps searching while it hasn't reached the goal
         while (!reachedGoal)
         {
             // Heuristic as the distance between player and star
-            Vector2 heuristic = simPlayer.transform.position - star.transform.position;
+            float distance = Vector2.Distance(simPlayer.transform.position, star.transform.position);
 
-            Path currentPath = priorityQueue.Dequeue();
-            Vector2 currentPos = currentPath.position;
+            Node currentNode = priorityQueue.Dequeue();
+            Vector2 currentPos = currentNode.position;
 
             // Only searches through position if it hasn't been searched before
             if (!explored.Contains(currentPos))
             {
                 explored.Add(currentPos);
 
-                for (int i = 0; i < 2; i++)
+                State baseState = currentNode.state;
+                for (int i = 0; i < avaliableActions.Count(); i++)
                 {
+                    RestoreStrate(baseState);
+                    pickedACtion = avaliableActions[i];
+                    takeAction(pickedACtion);
+                    simPhysicsScene2D.sim()
+                    cost = distance;
+                    newState = new State(bla bla bla), // cost
+                    newNode = new Node(newState, prevNode, cost);
+                    priorityQueue.add(newNode);
+
                     Vector2 newPos = currentPos;
-                    newPos += movement[i];
+                    newPos += avaliableActions[i];
 
                     if (!explored.Contains(newPos))
                     {
-                        List<Vector2> tempPath = currentPath.prevPos;
-                        tempPath.Add(currentPos);
+                        Node tempNode = currentNode.prevNode;
+                        tempNode.Add(currentPos);
 
-                        Path newPath = new Path(newPos, tempPath);
-                        priorityQueue.Enqueue(newPath);
+                        Node newNode = new Node(newPos, tempNode);
+                        priorityQueue.Enqueue(newNode);
                     }
                 }
             }
@@ -246,14 +257,28 @@ public class SearchandReplay : MonoBehaviour {
         return null;
     }
 
-    public struct Path {
+    public List<Node> pathOfNode(Node finalNode)
+    {
+        List<Node> finalPath = new List<Node>();
+        Node currentNode = finalNode;
+        while (currentNode.prevNode != null)
+        {
+            finalPath.Add(currentNode);
+            currentNode = currentNode.prevNode;
+        }
+
+        finalPath.Reverse();
+        return finalPath;
+    }
+
+    public struct Node {
         // One of the possible action types
         public Vector2 position;
-        public List<Vector2> prevPos;
+        public Node prevNode;
 
-        public Path(Vector2 pos, List<Vector2> prev) {
+        public Node(Vector2 pos, List<Vector2> prev) {
             position = pos;
-            prevPos = prev;
+            prevNode = prev;
         }
     }
 
