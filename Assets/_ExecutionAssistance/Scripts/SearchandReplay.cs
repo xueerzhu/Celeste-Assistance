@@ -310,92 +310,106 @@ public class SearchandReplay : MonoBehaviour {
     }
 
 
-}
+    public IEnumerator Replay()
+    {
+        isReplaying = true;
+        //print("Replay started with " + actionReplayQueue.Count + " actions");
 
-//     public IEnumerator Replay() {
-//         isReplaying = true;
-//         //print("Replay started with " + actionReplayQueue.Count + " actions");
-//
-//         // Replay as long as there is something to replay in the Queue.
-//         while (actionReplayQueue.Count > 0) {
-//
-//             // If there is no action that is being taken (because an action can be multiple frames)
-//             // pop the next action from the queue, and do it on the main player.
-//             if (activeAction == null) {
-//                 Action act = actionReplayQueue.Dequeue();
-//                 print("Action: " + act.actionType.ToString() + " has been taken and " + actionReplayQueue.Count + " remain.");
-//                 TakeAction(act);
-//
-//                 // This line is possibly wrong! Might need to wait for end of fixed update.
-//                 yield return new WaitForEndOfFrame();
-//             } else {
-//                 print("Action already active");
-//                 // This line is possibly wrong! Might need to wait for end of fixed update.
-//                 yield return new WaitForEndOfFrame();
-//             }
-//         }
-//         isReplaying = false;
-//         replayDone = true;
-//     }
-//
-//     Coroutine activeAction = null;
-//     // Given an action decides how to make the player game object execute it.
-//     void TakeAction(Action action) {
-//
-//         // StartCoroutine returns an Coroutine object. We use that to indiciate an action is underway.
-//         switch (action.actionType) {
-//             case ActionType.WalkL:
-//                 activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier));
-//                 break;
-//             case ActionType.WalkR:
-//                 activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier));
-//                 break;
-//
-//             case ActionType.Jump:
-//                 activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier));
-//                 break;
-//
-//             case ActionType.Dash:
-//                 Vector2 dir = DashDirectionDict[action.modifier];
-//                 activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5));
-//                 break;
-//         }
-//     }
-//
-//     // The three different actions that are slightly different.
-//     IEnumerator ExecuteWalkForNFrames(int dir, int frameCount) {
-//         for (int i = 0; i < frameCount; i++) {
-//             Vector2 walkDir = new Vector2(dir, 0);
-//             playerMovement.Walk(walkDir);
-//
-//             // This line might be problematic!
-//             yield return new WaitForFixedUpdate();
-//
-//             //yield return new WaitForSeconds(Time.fixedDeltaTime);
-//         }
-//         activeAction = null;
-//         yield return null;
-//     }
-//
-//     IEnumerator ExecuteJumpForNFrames(int frameCount) {
-//         for (int i = 0; i < frameCount; i++) {
-//             if (!playerMovement.wallGrab) {
-//                 playerMovement.Jump(Vector2.up, false);
-//             } else {
-//                 playerMovement.WallJump();
-//             }
-//             yield return new WaitForFixedUpdate();
-//         }
-//         activeAction = null;
-//         yield return null;
-//     }
-//
-//     IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount) {
-//         playerMovement.Dash(dir.x, dir.y);
-//         for (int i = 0; i < frameCount; i++) {
-//             yield return new WaitForFixedUpdate();
-//         }
-//         activeAction = null;
-//         yield return null;
-//     }
-// }
+        // Replay as long as there is something to replay in the Queue.
+        while (actionReplayQueue.Count > 0)
+        {
+
+            // If there is no action that is being taken (because an action can be multiple frames)
+            // pop the next action from the queue, and do it on the main player.
+            if (activeAction == null)
+            {
+                Action act = actionReplayQueue.Dequeue();
+                print("Action: " + act.actionType.ToString() + " has been taken and " + actionReplayQueue.Count + " remain.");
+                TakeAction(act);
+
+                // This line is possibly wrong! Might need to wait for end of fixed update.
+                yield return new WaitForEndOfFrame();
+            }
+            else
+            {
+                print("Action already active");
+                // This line is possibly wrong! Might need to wait for end of fixed update.
+                yield return new WaitForEndOfFrame();
+            }
+        }
+        isReplaying = false;
+        replayDone = true;
+    }
+
+    Coroutine activeAction = null;
+    // Given an action decides how to make the player game object execute it.
+    void TakeAction(Action action)
+    {
+
+        // StartCoroutine returns an Coroutine object. We use that to indiciate an action is underway.
+        switch (action.actionType)
+        {
+            case ActionType.WalkL:
+                activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier));
+                break;
+            case ActionType.WalkR:
+                activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier));
+                break;
+
+            case ActionType.Jump:
+                activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier));
+                break;
+
+            case ActionType.Dash:
+                Vector2 dir = DashDirectionDict[action.modifier];
+                activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5));
+                break;
+        }
+    }
+
+    // The three different actions that are slightly different.
+    IEnumerator ExecuteWalkForNFrames(int dir, int frameCount)
+    {
+        for (int i = 0; i < frameCount; i++)
+        {
+            Vector2 walkDir = new Vector2(dir, 0);
+            playerMovement.Walk(walkDir);
+
+            // This line might be problematic!
+            yield return new WaitForFixedUpdate();
+
+            //yield return new WaitForSeconds(Time.fixedDeltaTime);
+        }
+        activeAction = null;
+        yield return null;
+    }
+
+    IEnumerator ExecuteJumpForNFrames(int frameCount)
+    {
+        for (int i = 0; i < frameCount; i++)
+        {
+            if (!playerMovement.wallGrab)
+            {
+                playerMovement.Jump(Vector2.up, false);
+            }
+            else
+            {
+                playerMovement.WallJump();
+            }
+            yield return new WaitForFixedUpdate();
+        }
+        activeAction = null;
+        yield return null;
+    }
+
+    IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount)
+    {
+        playerMovement.Dash(dir.x, dir.y);
+        for (int i = 0; i < frameCount; i++)
+        {
+            yield return new WaitForFixedUpdate();
+        }
+        activeAction = null;
+        yield return null;
+    }
+ }
