@@ -129,13 +129,16 @@ public class SearchandReplay : MonoBehaviour {
     void PrepareAStar()
     {
         // Astar searches for 2 actions right now walk right 1 frame and walk left 1 frame
-        //actionSets.Add(new Action(ActionType.WalkR, 1));
-        //actionSets.Add(new Action(ActionType.WalkL, 1));
+        actionSets.Add(new Action(ActionType.WalkR, 1));
+        actionSets.Add(new Action(ActionType.WalkL, 1));
         actionSets.Add(new Action(ActionType.Jump, 1));
         //actionSets.Add(new Action(ActionType.Dash, 1));
         
         //starting node add to queue
         priorityQueue.Enqueue(new Node(GetSimPlayerState(), null, GetHeuristic()), GetHeuristic());
+        
+        
+        
     }
 
     public void PreparePhysicsScene() {
@@ -170,12 +173,18 @@ public class SearchandReplay : MonoBehaviour {
             
             if (!isReplaying) {
                 StartCoroutine(ReplayFromNode());
+                
+                // TODO: this is not working
+                // freeze player at paths from astar result, instead of drop due to gravity
+                mainPlayer.transform.position = mainPlayer.transform.position;
             }
         }
         else
         {
-            RunAStar();
-            
+            for (int i = 0; i < simulationSteps; i++)
+            {
+                RunAStar();
+            }
         }
     }
     
