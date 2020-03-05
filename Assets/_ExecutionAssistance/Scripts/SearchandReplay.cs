@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Priority_Queue;
+using System.Linq;
 
 public class SearchandReplay : MonoBehaviour {
 
@@ -42,12 +43,17 @@ public class SearchandReplay : MonoBehaviour {
     [Header("Replay System")]
     private Queue<Action> actionReplayQueue = new Queue<Action>();
     private Queue<State>  stateReplayQueue = new Queue<State>();
-    private Queue<Vector2>  vectorReplayQueue = new Queue<Vector2>();
+    private Queue<Node>  nodeReplayQueue = new Queue<Node>();
 
 
     Dictionary<int, Vector2> DashDirectionDict = new Dictionary<int, Vector2>();
     public enum ActionType { WalkR, WalkL, Noop, Jump, Dash };
-    public enum ActionSet {WalkR, WalkL, Jump, DashUp, DashRight, DashLeft};
+    List<Action> actionSets = new List<Action>();
+    
+    [Space]
+    [Header("Astar")]
+    SimplePriorityQueue<Node> priorityQueue = new SimplePriorityQueue<Node>();
+    Stack<Node> exploredStack = new Stack<Node>();
 
     public struct Action {
         // One of the possible action types
@@ -86,7 +92,7 @@ public class SearchandReplay : MonoBehaviour {
         }
     }
 
-    private void Start() {
+    private void Awake() {
         // int to dash direction. Go to action struct for explanation
         DashDirectionDict.Add(0, new Vector2(1, 0));
         DashDirectionDict.Add(1, new Vector2(1, 1));
@@ -97,7 +103,7 @@ public class SearchandReplay : MonoBehaviour {
         DashDirectionDict.Add(6, new Vector2(0, -1));
         DashDirectionDict.Add(7, new Vector2(1, -1));
 
-        // leave it = true so physics si simulated normally in main scene
+        // leave it = true so physics simulated normally in main scene
         //Physics2D.autoSimulation = false;
         mainScene = SceneManager.GetActiveScene();
         simScene = SceneManager.CreateScene("sim-physics-scene", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
@@ -110,6 +116,26 @@ public class SearchandReplay : MonoBehaviour {
 
         mainPlayerRB = mainPlayer.GetComponent<Rigidbody2D>();
         simPlayerRB = simPlayer.GetComponent<Rigidbody2D>();
+        
+        PrepareAStar();
+    }
+
+    private void Start()
+    {
+        //nodeReplayQueue = RunAStar();
+    }
+
+    // Action Sets
+    void PrepareAStar()
+    {
+        // Astar searches for 2 actions right now walk right 1 frame and walk left 1 frame
+        //actionSets.Add(new Action(ActionType.WalkR, 1));
+        //actionSets.Add(new Action(ActionType.WalkL, 1));
+        actionSets.Add(new Action(ActionType.Jump, 1));
+        //actionSets.Add(new Action(ActionType.Dash, 1));
+        
+        //starting node add to queue
+        priorityQueue.Enqueue(new Node(GetSimPlayerState(), null, GetHeuristic()), GetHeuristic());
     }
 
     public void PreparePhysicsScene() {
@@ -126,170 +152,137 @@ public class SearchandReplay : MonoBehaviour {
         levelGeometry.transform.name = "simLevel";
     }
 
-    void FixedUpdate() {
-
-        if (replayDone) {
+    void FixedUpdate() 
+    {
+        
+        if (replayDone || isReplaying) {
             return;
         }
 
-        // If you reached the goal...
-        if (reachedGoal) {
-            // and you are not replaying.
-            if (!isReplaying) {
-                // start the replay!
-                StartCoroutine(ReplayFromState());
-            }
-        // Otherwise keep simulating the physics scene.
-        } else {
-            vectorReplayQueue = RunAStar();
-            for (int i = 0; i < simulationSteps; i++) {
-                // Here is an example action. In this case just moving right for 1 frame.
-
-
-
-                //actionReplayQueue.Enqueue(new Action(ActionType.WalkR, 1));
-
-                // !!!
-                // In order to record the state correctly, we need to know if madeline can Dash/Jump whether she is climbing.
-                // There most likely are varibles in the Movement script that correspond to these three bools directly,
-                // find them and add them to current state! If there doesn't exist a simple bool just make it (isgrounded vs hasjumped can be combined i
-                // into can jmp
-                //State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
-                //currentState.print();
-                //stateReplayQueue.Enqueue(currentState);
-
-                // Take the action on the simulatedPlayer...
-                // We would be doing the search here.
-            //    simMovement.Walk(new Vector2(1, 0));
-
-                // and actually simualte the physics for it for 1 frame.
-                simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
-
-            }
-        }
-        //Debug.Log(stateReplayQueue.Count);
-    }
-
-
-    // We need to implement this function now.
-    public Queue<Vector2> RunAStar() {
-        // Node -> Vector2, List of Vector2
-        SimplePriorityQueue<Node> priorityQueue = new SimplePriorityQueue<Node>();
-
-        // Starting state
-        //State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
-        priorityQueue.Enqueue(new Node(simPlayer.transform.position, null), 0);
-
-        // Positions explored
-        List<Vector2> explored = new List<Vector2>();
-
-        // Successor positions
-        List<Vector2> avaliableActions = new List<Vector2>();
-        avaliableActions.Add(new Vector2(-1, 0));
-        avaliableActions.Add(new Vector2(1, 0));
-
-        // Keeps searching while it hasn't reached the goal
-        while (!reachedGoal)
+        if (reachedGoal)
         {
-            // Heuristic as the distance between player and star
-            float distance = Vector2.Distance(simPlayer.transform.position, star.transform.position);
-
-            Node currentNode = priorityQueue.Dequeue();
-            Vector2 currentPos = currentNode.position;
-
-            // Only searches through position if it hasn't been searched before
-            if (!explored.Contains(currentPos))
+            nodeReplayQueue = ReturnAStarResult();
+            Debug.Log("nodeReplayQueue is: ");
+            foreach (var node in nodeReplayQueue)
             {
-                explored.Add(currentPos);
-
-                //State baseState = currentNode.state;
-                for (int i = 0; i < avaliableActions.Count; i++)
-                {
-                    // RestoreStrate(baseState);
-                    // pickedACtion = avaliableActions[i];
-                    // takeAction(pickedACtion);
-                    // simPhysicsScene2D.sim()
-                    // cost = distance;
-                    // newState = new State(bla bla bla), // cost
-                    // newNode = new Node(newState, prevNode, cost);
-                    // priorityQueue.add(newNode);
-
-                    Vector2 newPos = currentPos;
-                    newPos += avaliableActions[i];
-
-                    if (!explored.Contains(newPos))
-                    {
-                        //Node tempNode = currentNode.prevNode;
-
-                        Node newNode = new Node(newPos, currentNode);
-                        priorityQueue.Enqueue(newNode, distance);
-                    }
-                }
+                node.PrintNode();
+            }
+            
+            if (!isReplaying) {
+                StartCoroutine(ReplayFromNode());
             }
         }
+        else
+        {
+            RunAStar();
+            
+        }
+    }
+    
 
-        // while goal not reached keep searching
-            // goal reached colliding with goal (there is a goal script that checks for that)
-        //Have a sorted queue, that sorts the states using (cost of getting there + heuristic)
-        // check out the A* psudocode and message me if you need help.
+    private void RunAStar() {
+        // Keeps searching while it hasn't reached the goal
+        if(!reachedGoal)
+        {
+            Node currentNode = priorityQueue.Dequeue();
 
-        /*
-        frontier = util.PriorityQueue()
-        frontier.push((problem.startingState(), [], 0), 0)  # position, path, cost
-        explored = []   # Explored paths
+            State baseState = currentNode.state;
+            
+            //Debug.Log("base state is:");
+            //baseState.print();
+            
+            foreach (var pickedAction in actionSets )
+            {
+                RestoreState(baseState);
+                TakeAction(pickedAction, simMovement);
+                
+                //Debug.Log(pickedAction.actionType + ", new state is:");
+                
+                // Is it correct to simiulate here?
+                simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+                
+                float cost = GetHeuristic();
+                State newState = GetSimPlayerState();
+                //newState.print();
+                
+                Node newNode = new Node(newState, currentNode, cost);
+                priorityQueue.Enqueue(newNode, cost);
+            }
 
-        while not frontier.isEmpty():
-            node, path, cost = frontier.pop()
-            if not node in explored:
-
-                # If the goal is found, return the path taken to the goal
-                if (problem.isGoal(node)):
-                    return path
-
-                explored.append(node)
-
-                # Only adds sucessor nodes, updated path, and cost if it hasn't been explored yet
-                for nextNode in problem.successorStates(node):
-                    if not nextNode[0] in explored:
-                        frontier.push((nextNode[0], path + [nextNode[1]], cost + nextNode[2]),
-                            cost + nextNode[2] + heuristic(nextNode[0], problem))
-        */
-        return null;
+            //Debug.Log("priority queue is: ");
+            //foreach (var node in priorityQueue)
+            //{
+                //node.PrintNode();
+            //}
+            exploredStack.Push(currentNode);
+            
+        }
+        else
+        {
+            Debug.Log("reached goal");
+        }
+       
     }
 
-    public List<Node> pathOfNode(Node finalNode)
+    private Queue<Node> ReturnAStarResult()
     {
-        List<Node> finalPath = new List<Node>();
-        Node currentNode = finalNode;
-        while (currentNode.prevNode != null)
+        // the last explored node should be final node 
+        Node finalNode = exploredStack.Pop();
+        // construct a queue of node base on final node: reverse linked list
+        Node pointerNode = finalNode;
+        while (pointerNode.prevNode != null)
         {
-            finalPath.Add(currentNode);
-            currentNode = currentNode.prevNode;
+            nodeReplayQueue.Enqueue(pointerNode);
+            pointerNode = pointerNode.prevNode;
         }
+        nodeReplayQueue.Enqueue(pointerNode);
+        nodeReplayQueue = new Queue<Node>(nodeReplayQueue.Reverse());
+        
+        //nodeReplayQueue.Dequeue().PrintNode();
+        return nodeReplayQueue;
+    }
 
-        finalPath.Reverse();
-        return finalPath;
+    private float GetHeuristic()
+    {
+        float heuristic = Vector2.Distance(simPlayer.transform.position, star.transform.position);
+        return heuristic;
+    }
+    
+    // get simplayer runtime state
+    public State GetSimPlayerState()
+    {
+        return new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
     }
 
     public class Node {
         // One of the possible action types
-        public Vector2 position;
+        public State state;
         public Node prevNode;
+        public float heuristic;
 
-        public Node(Vector2 pos, Node prev) {
-            position = pos;
+        public Node(State mState, Node prev, float heu) {
+            state = mState;
             prevNode = prev;
+            heuristic = heu;
         }
+
+        public void PrintNode()
+        {
+            state.print();
+            Debug.Log("heuristic is " + heuristic);
+            
+        }
+        
     }
 
-    public IEnumerator ReplayFromState() {
+    public IEnumerator ReplayFromNode() {
         isReplaying = true;
         //print("Replay started with " + actionReplayQueue.Count + " actions");
 
         // Replay as long as there is something to replay in the Queue.
-        while (stateReplayQueue.Count > 0) {
-            print("Replay started with " + stateReplayQueue.Count + " state");
-            State currReplayState = stateReplayQueue.Dequeue();
+        while (nodeReplayQueue.Count > 0) {
+            print("Replay started with " + nodeReplayQueue.Count + " node");
+            State currReplayState = nodeReplayQueue.Dequeue().state;
             UpdateMainPlayer(currReplayState);
             yield return new WaitForFixedUpdate();
         }
@@ -300,16 +293,20 @@ public class SearchandReplay : MonoBehaviour {
     void UpdateMainPlayer(State currState) {
         mainPlayer.transform.position = currState.madelinePos;
         //mainPlayerRB.velocity = currState.madelineVel;
-
         // set the flags here as well.
     }
 
     void RestoreState(State state){
         //sets the current Unity state to the state
-        //transform.position = state.pos;
+        simPlayer.transform.position = state.madelinePos;
+        simPlayerRB.velocity = state.madelineVel;
+
+        //jumped = j;
+        //dashed = d;
+        //climbing = c;
     }
-
-
+    
+    // dated replay code
     public IEnumerator Replay()
     {
         isReplaying = true;
@@ -325,7 +322,7 @@ public class SearchandReplay : MonoBehaviour {
             {
                 Action act = actionReplayQueue.Dequeue();
                 print("Action: " + act.actionType.ToString() + " has been taken and " + actionReplayQueue.Count + " remain.");
-                TakeAction(act);
+                TakeAction(act, playerMovement);
 
                 // This line is possibly wrong! Might need to wait for end of fixed update.
                 yield return new WaitForEndOfFrame();
@@ -343,37 +340,36 @@ public class SearchandReplay : MonoBehaviour {
 
     Coroutine activeAction = null;
     // Given an action decides how to make the player game object execute it.
-    void TakeAction(Action action)
+    void TakeAction(Action action, Movement agentMovement )
     {
-
         // StartCoroutine returns an Coroutine object. We use that to indiciate an action is underway.
         switch (action.actionType)
         {
             case ActionType.WalkL:
-                activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier));
+                activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier, agentMovement));
                 break;
             case ActionType.WalkR:
-                activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier));
+                activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier, agentMovement));
                 break;
 
             case ActionType.Jump:
-                activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier));
+                activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier, agentMovement));
                 break;
 
             case ActionType.Dash:
                 Vector2 dir = DashDirectionDict[action.modifier];
-                activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5));
+                activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5, agentMovement));
                 break;
         }
     }
 
     // The three different actions that are slightly different.
-    IEnumerator ExecuteWalkForNFrames(int dir, int frameCount)
+    IEnumerator ExecuteWalkForNFrames(int dir, int frameCount, Movement agentMovement)
     {
         for (int i = 0; i < frameCount; i++)
         {
             Vector2 walkDir = new Vector2(dir, 0);
-            playerMovement.Walk(walkDir);
+            agentMovement.Walk(walkDir);
 
             // This line might be problematic!
             yield return new WaitForFixedUpdate();
@@ -384,17 +380,17 @@ public class SearchandReplay : MonoBehaviour {
         yield return null;
     }
 
-    IEnumerator ExecuteJumpForNFrames(int frameCount)
+    IEnumerator ExecuteJumpForNFrames(int frameCount, Movement agentMovement)
     {
         for (int i = 0; i < frameCount; i++)
         {
-            if (!playerMovement.wallGrab)
+            if (!agentMovement.wallGrab)
             {
-                playerMovement.Jump(Vector2.up, false);
+                agentMovement.Jump(Vector2.up, false);
             }
             else
             {
-                playerMovement.WallJump();
+                agentMovement.WallJump();
             }
             yield return new WaitForFixedUpdate();
         }
@@ -402,9 +398,9 @@ public class SearchandReplay : MonoBehaviour {
         yield return null;
     }
 
-    IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount)
+    IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement)
     {
-        playerMovement.Dash(dir.x, dir.y);
+        agentMovement.Dash(dir.x, dir.y);
         for (int i = 0; i < frameCount; i++)
         {
             yield return new WaitForFixedUpdate();

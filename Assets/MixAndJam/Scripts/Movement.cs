@@ -42,7 +42,7 @@ public class Movement : MonoBehaviour
     public ParticleSystem slideParticle;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         coll = GetComponent<Collision>();
         rb = GetComponent<Rigidbody2D>();
