@@ -248,7 +248,7 @@ public class SearchandReplay : MonoBehaviour {
         return heuristic;
     }
     
-    // get simplayer runtime state
+    // get sim player runtime state
     public State GetSimPlayerState()
     {
         return new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
