@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Priority_Queue;
 
 public class SearchandReplay : MonoBehaviour {
 
@@ -173,11 +174,11 @@ public class SearchandReplay : MonoBehaviour {
     // We need to implement this function now.
     public Queue<Vector2> RunAStar() {
         // Node -> Vector2, List of Vector2
-        Queue<Node> priorityQueue = new Queue<Node>();
+        SimplePriorityQueue<Node> priorityQueue = new SimplePriorityQueue<Node>();
 
         // Starting state
         //State currentState = new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
-        priorityQueue.Enqueue(new Node(simPlayer.transform.position, null));
+        priorityQueue.Enqueue(new Node(simPlayer.transform.position, null), 0);
 
         // Positions explored
         List<Vector2> explored = new List<Vector2>();
@@ -201,28 +202,27 @@ public class SearchandReplay : MonoBehaviour {
             {
                 explored.Add(currentPos);
 
-                State baseState = currentNode.state;
-                for (int i = 0; i < avaliableActions.Count(); i++)
+                //State baseState = currentNode.state;
+                for (int i = 0; i < avaliableActions.Count; i++)
                 {
-                    RestoreStrate(baseState);
-                    pickedACtion = avaliableActions[i];
-                    takeAction(pickedACtion);
-                    simPhysicsScene2D.sim()
-                    cost = distance;
-                    newState = new State(bla bla bla), // cost
-                    newNode = new Node(newState, prevNode, cost);
-                    priorityQueue.add(newNode);
+                    // RestoreStrate(baseState);
+                    // pickedACtion = avaliableActions[i];
+                    // takeAction(pickedACtion);
+                    // simPhysicsScene2D.sim()
+                    // cost = distance;
+                    // newState = new State(bla bla bla), // cost
+                    // newNode = new Node(newState, prevNode, cost);
+                    // priorityQueue.add(newNode);
 
                     Vector2 newPos = currentPos;
                     newPos += avaliableActions[i];
 
                     if (!explored.Contains(newPos))
                     {
-                        Node tempNode = currentNode.prevNode;
-                        tempNode.Add(currentPos);
+                        //Node tempNode = currentNode.prevNode;
 
-                        Node newNode = new Node(newPos, tempNode);
-                        priorityQueue.Enqueue(newNode);
+                        Node newNode = new Node(newPos, currentNode);
+                        priorityQueue.Enqueue(newNode, distance);
                     }
                 }
             }
@@ -271,12 +271,12 @@ public class SearchandReplay : MonoBehaviour {
         return finalPath;
     }
 
-    public struct Node {
+    public class Node {
         // One of the possible action types
         public Vector2 position;
         public Node prevNode;
 
-        public Node(Vector2 pos, List<Vector2> prev) {
+        public Node(Vector2 pos, Node prev) {
             position = pos;
             prevNode = prev;
         }
@@ -306,7 +306,7 @@ public class SearchandReplay : MonoBehaviour {
 
     void RestoreState(State state){
         //sets the current Unity state to the state
-        transform.position = state.pos;
+        //transform.position = state.pos;
     }
 
 
