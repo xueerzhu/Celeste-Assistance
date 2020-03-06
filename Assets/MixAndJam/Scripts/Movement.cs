@@ -29,8 +29,9 @@ public class Movement : MonoBehaviour
 
     [Space]
 
-    private bool groundTouch;
-    private bool hasDashed;
+    public bool groundTouch;
+    public bool touchingWall;
+    public bool hasDashed;
 
     public int side = 1;
 
@@ -42,7 +43,7 @@ public class Movement : MonoBehaviour
     public ParticleSystem slideParticle;
 
     // Start is called before the first frame update
-    void Start()
+    void Awake()
     {
         coll = GetComponent<Collision>();
         rb = GetComponent<Rigidbody2D>();
@@ -52,6 +53,8 @@ public class Movement : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        touchingWall = coll.onWall;
+
         float x = Input.GetAxis("Horizontal");
         float y = Input.GetAxis("Vertical");
         float xRaw = Input.GetAxisRaw("Horizontal");
