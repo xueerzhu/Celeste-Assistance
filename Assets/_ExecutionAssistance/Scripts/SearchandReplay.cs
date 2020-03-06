@@ -36,6 +36,8 @@ public class SearchandReplay : MonoBehaviour {
     private Movement simMovement;
     private Movement playerMovement;
 
+    private Collision simCollision;
+
     bool isReplaying = false;
     bool replayDone = false;
 
@@ -49,11 +51,16 @@ public class SearchandReplay : MonoBehaviour {
     Dictionary<int, Vector2> DashDirectionDict = new Dictionary<int, Vector2>();
     public enum ActionType { WalkR, WalkL, Noop, Jump, Dash };
     List<Action> actionSets = new List<Action>();
-    
+
+    private Action WalkR;
+    private Action WalkL;
+    private Action Jump;
+
     [Space]
     [Header("Astar")]
     SimplePriorityQueue<Node> priorityQueue = new SimplePriorityQueue<Node>();
-    Stack<Node> exploredStack = new Stack<Node>();
+    Stack<State> exploredStack = new Stack<State>();
+    Node finalNode = null;
 
     public struct Action {
         // One of the possible action types
@@ -114,6 +121,8 @@ public class SearchandReplay : MonoBehaviour {
         simMovement = simPlayer.GetComponent<Movement>();
         playerMovement = mainPlayer.GetComponent<Movement>();
 
+        simCollision = simPlayer.GetComponent<Collision>();
+
         mainPlayerRB = mainPlayer.GetComponent<Rigidbody2D>();
         simPlayerRB = simPlayer.GetComponent<Rigidbody2D>();
         
@@ -128,17 +137,18 @@ public class SearchandReplay : MonoBehaviour {
     // Action Sets
     void PrepareAStar()
     {
+        WalkR = new Action(ActionType.WalkR, 1);
+        WalkL = new Action(ActionType.WalkL, 1);
+        Jump = new Action(ActionType.Jump, 1);
+
         // Astar searches for 2 actions right now walk right 1 frame and walk left 1 frame
-        actionSets.Add(new Action(ActionType.WalkR, 1));
-        actionSets.Add(new Action(ActionType.WalkL, 1));
-        actionSets.Add(new Action(ActionType.Jump, 1));
+        actionSets.Add(WalkR);
+        actionSets.Add(WalkL);
+        actionSets.Add(Jump);
         //actionSets.Add(new Action(ActionType.Dash, 1));
-        
+
         //starting node add to queue
         priorityQueue.Enqueue(new Node(GetSimPlayerState(), null, GetHeuristic()), GetHeuristic());
-        
-        
-        
     }
 
     public void PreparePhysicsScene() {
@@ -184,59 +194,100 @@ public class SearchandReplay : MonoBehaviour {
             for (int i = 0; i < simulationSteps; i++)
             {
                 RunAStar();
+                if (reachedGoal) return;
             }
         }
     }
-    
 
-    private void RunAStar() {
+    private void RunAStar()
+    {
+       
         // Keeps searching while it hasn't reached the goal
-        if(!reachedGoal)
+        if (priorityQueue.Count() != 0)
         {
             Node currentNode = priorityQueue.Dequeue();
 
             State baseState = currentNode.state;
-            
+
             //Debug.Log("base state is:");
             //baseState.print();
-            
-            foreach (var pickedAction in actionSets )
+            if (!exploredStack.Contains(baseState))
             {
-                RestoreState(baseState);
-                TakeAction(pickedAction, simMovement);
-                
-                //Debug.Log(pickedAction.actionType + ", new state is:");
-                
-                // Is it correct to simiulate here?
-                simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
-                
-                float cost = GetHeuristic();
-                State newState = GetSimPlayerState();
-                //newState.print();
-                
-                Node newNode = new Node(newState, currentNode, cost);
-                priorityQueue.Enqueue(newNode, cost);
-            }
+                exploredStack.Push(baseState);
+                currentNode.PrintNode();
+                resetActions();
 
-            //Debug.Log("priority queue is: ");
-            //foreach (var node in priorityQueue)
-            //{
+                foreach (var pickedAction in availableActions (actionSets))
+                {
+                    //currentNode.state.print();
+                    RestoreState(baseState);
+                    TakeAction(pickedAction, simMovement);
+
+                    //Debug.Log(pickedAction.actionType + ", new state is:");
+
+                    // Is it correct to simiulate here?
+                    simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+                   
+                    float cost = GetHeuristic();
+                    State newState = GetSimPlayerState();
+                    //newState.print();
+
+                    Node newNode = new Node(newState, currentNode, cost);
+                    if (reachedGoal)
+                    {
+                        Debug.Log("reached goal");
+                        finalNode = newNode;
+                        return;
+                    }
+
+                    if (!exploredStack.Contains(newNode.state))
+                        priorityQueue.Enqueue(newNode, cost);
+                }
+
+                //Debug.Log("priority queue is: ");
+                //foreach (var node in priorityQueue)
+                //{
                 //node.PrintNode();
-            //}
-            exploredStack.Push(currentNode);
-            
+                //}
+            }
         }
         else
         {
-            Debug.Log("reached goal");
+            Debug.Log("No Path Found");
         }
-       
+    }
+
+    private void resetActions()
+    {
+        actionSets.Clear();
+        actionSets.Add(WalkR);
+        actionSets.Add(WalkL);
+        actionSets.Add(Jump);
+    }
+
+    private List<Action> availableActions (List<Action> actions)
+    {
+        List<Action> currActions = actions;
+
+        if (!simMovement.canMove)
+        {
+            //Debug.Log("Removed Walking");
+            currActions.Remove(WalkR);
+            currActions.Remove(WalkL);
+        }
+        if (!simCollision.onGround)
+        {
+            //Debug.Log("Removed Jump");
+            currActions.Remove(Jump);
+        }
+
+        return currActions;
     }
 
     private Queue<Node> ReturnAStarResult()
     {
         // the last explored node should be final node 
-        Node finalNode = exploredStack.Pop();
+        //Node finalNode = exploredStack.Pop();
         // construct a queue of node base on final node: reverse linked list
         Node pointerNode = finalNode;
         while (pointerNode.prevNode != null)
@@ -254,7 +305,7 @@ public class SearchandReplay : MonoBehaviour {
     private float GetHeuristic()
     {
         float heuristic = Vector2.Distance(simPlayer.transform.position, star.transform.position);
-        return heuristic;
+        return (float)Math.Round(heuristic, 2);
     }
     
     // get sim player runtime state
@@ -278,10 +329,9 @@ public class SearchandReplay : MonoBehaviour {
         public void PrintNode()
         {
             state.print();
-            Debug.Log("heuristic is " + heuristic);
+            //Debug.Log("heuristic is " + heuristic);
             
         }
-        
     }
 
     public IEnumerator ReplayFromNode() {
