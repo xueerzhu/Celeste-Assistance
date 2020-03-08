@@ -19,6 +19,7 @@ public class SearchandReplay : MonoBehaviour {
     [Space]
     [Header("Parameters")]
     public int simulationSteps = 0;
+    public float baseActionCost = 1;
 
     [Space]
     [Header("Bool")]
@@ -148,7 +149,7 @@ public class SearchandReplay : MonoBehaviour {
         //actionSets.Add(new Action(ActionType.Dash, 1));
 
         //starting node add to queue
-        priorityQueue.Enqueue(new Node(GetSimPlayerState(), null, GetHeuristic()), GetHeuristic());
+        priorityQueue.Enqueue(new Node(GetSimPlayerState(), null, GetHeuristic(), 0), GetHeuristic());
     }
 
     public void PreparePhysicsScene() {
@@ -216,7 +217,7 @@ public class SearchandReplay : MonoBehaviour {
                 exploredStack.Push(baseState);
                 currentNode.PrintNode();
                 resetActions();
-
+                
                 foreach (var pickedAction in availableActions (actionSets))
                 {
                     //currentNode.state.print();
@@ -232,7 +233,7 @@ public class SearchandReplay : MonoBehaviour {
                     State newState = GetSimPlayerState();
                     //newState.print();
 
-                    Node newNode = new Node(newState, currentNode, cost);
+                    Node newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost);
                     if (reachedGoal)
                     {
                         Debug.Log("reached goal");
@@ -241,7 +242,7 @@ public class SearchandReplay : MonoBehaviour {
                     }
 
                     if (!exploredStack.Contains(newNode.state))
-                        priorityQueue.Enqueue(newNode, cost);
+                        priorityQueue.Enqueue(newNode, cost + newNode.costToGetHere);
                 }
 
                 //Debug.Log("priority queue is: ");
@@ -319,11 +320,13 @@ public class SearchandReplay : MonoBehaviour {
         public State state;
         public Node prevNode;
         public float heuristic;
+        public float costToGetHere;
 
-        public Node(State mState, Node prev, float heu) {
+        public Node(State mState, Node prev, float heu, float cost) {
             state = mState;
             prevNode = prev;
             heuristic = heu;
+            costToGetHere = cost;
         }
 
         public void PrintNode()
