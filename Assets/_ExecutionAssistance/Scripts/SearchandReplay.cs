@@ -39,6 +39,7 @@ public class SearchandReplay : MonoBehaviour {
 
     private Collision simCollision;
 
+    bool beginSearch = false;
     bool isReplaying = false;
     bool replayDone = false;
 
@@ -56,6 +57,11 @@ public class SearchandReplay : MonoBehaviour {
     private Action WalkR;
     private Action WalkL;
     private Action Jump;
+    private Action DashR;
+    private Action DashUR;
+    private Action DashU;
+    private Action DashUL;
+    private Action DashL;
 
     [Space]
     [Header("Astar")]
@@ -96,7 +102,7 @@ public class SearchandReplay : MonoBehaviour {
 
         public void print()
         {
-            Debug.Log("Pos: " + madelinePos + " Vel: " + madelineVel + " Jump: " + jumped + " Dash: " + dashed + " Climb: " + climbing);
+            Debug.Log("Pos: " + madelinePos + " Vel: " + madelineVel + ", Jump: " + jumped + ", Dash: " + dashed + ", Climb: " + climbing);
         }
     }
 
@@ -138,18 +144,29 @@ public class SearchandReplay : MonoBehaviour {
     // Action Sets
     void PrepareAStar()
     {
-        WalkR = new Action(ActionType.WalkR, 1);
-        WalkL = new Action(ActionType.WalkL, 1);
-        Jump = new Action(ActionType.Jump, 1);
+        WalkR = new Action(ActionType.WalkR, 100);
+        WalkL = new Action(ActionType.WalkL, 100);
+        Jump = new Action(ActionType.Jump, 50);
+        DashR = new Action(ActionType.Dash, 0);
+        DashUR = new Action(ActionType.Dash, 1);
+        DashU = new Action(ActionType.Dash, 2);
+        DashUL = new Action(ActionType.Dash, 3);
+        DashL = new Action(ActionType.Dash, 4);
 
-        // Astar searches for 2 actions right now walk right 1 frame and walk left 1 frame
+
+        // Actions that Astar will search for
         actionSets.Add(WalkR);
         actionSets.Add(WalkL);
         actionSets.Add(Jump);
+        actionSets.Add(DashR);
+        actionSets.Add(DashUR);
+        actionSets.Add(DashU);
+        actionSets.Add(DashUL);
+        actionSets.Add(DashL);
         //actionSets.Add(new Action(ActionType.Dash, 1));
 
         //starting node add to queue
-        priorityQueue.Enqueue(new Node(GetSimPlayerState(), null, GetHeuristic(), 0), GetHeuristic());
+        priorityQueue.Enqueue(new Node(GetSimPlayerState(new Action(ActionType.WalkR, 0)), null, GetHeuristic(), 0), GetHeuristic());
     }
 
     public void PreparePhysicsScene() {
@@ -168,35 +185,52 @@ public class SearchandReplay : MonoBehaviour {
 
     void FixedUpdate() 
     {
-        
+        if (Input.GetKeyDown(KeyCode.P)) 
+        {
+            beginSearch = true;
+            mainPlayerRB.constraints = RigidbodyConstraints2D.None;
+            mainPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
+            simPlayerRB.constraints = RigidbodyConstraints2D.None;
+            simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
+        }
+
         if (replayDone || isReplaying) {
             return;
         }
 
-        if (reachedGoal)
+        if (beginSearch)
         {
-            nodeReplayQueue = ReturnAStarResult();
-            Debug.Log("nodeReplayQueue is: ");
-            foreach (var node in nodeReplayQueue)
+            if (reachedGoal)
             {
-                node.PrintNode();
+                nodeReplayQueue = ReturnAStarResult();
+                Debug.Log("nodeReplayQueue is: ");
+                foreach (var node in nodeReplayQueue)
+                {
+                    node.PrintNode();
+                }
+
+                if (!isReplaying)
+                {
+                    StartCoroutine(ReplayFromNode());
+
+                    // TODO: this is not working
+                    // freeze player at paths from astar result, instead of drop due to gravity
+                    mainPlayer.transform.position = mainPlayer.transform.position;
+                }
             }
-            
-            if (!isReplaying) {
-                StartCoroutine(ReplayFromNode());
-                
-                // TODO: this is not working
-                // freeze player at paths from astar result, instead of drop due to gravity
-                mainPlayer.transform.position = mainPlayer.transform.position;
+            else
+            {
+                for (int i = 0; i < simulationSteps; i++)
+                {
+                    RunAStar();
+                    if (reachedGoal) return;
+                }
             }
         }
         else
         {
-            for (int i = 0; i < simulationSteps; i++)
-            {
-                RunAStar();
-                if (reachedGoal) return;
-            }
+            mainPlayerRB.constraints = RigidbodyConstraints2D.FreezePosition;
+            simPlayerRB.constraints = RigidbodyConstraints2D.FreezePosition;
         }
     }
 
@@ -230,7 +264,7 @@ public class SearchandReplay : MonoBehaviour {
                     simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
                    
                     float cost = GetHeuristic();
-                    State newState = GetSimPlayerState();
+                    State newState = GetSimPlayerState(pickedAction);
                     //newState.print();
 
                     Node newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost);
@@ -264,6 +298,11 @@ public class SearchandReplay : MonoBehaviour {
         actionSets.Add(WalkR);
         actionSets.Add(WalkL);
         actionSets.Add(Jump);
+        actionSets.Add(DashR);
+        actionSets.Add(DashUR);
+        actionSets.Add(DashU);
+        actionSets.Add(DashUL);
+        actionSets.Add(DashL);
     }
 
     private List<Action> availableActions (List<Action> actions)
@@ -280,6 +319,14 @@ public class SearchandReplay : MonoBehaviour {
         {
             //Debug.Log("Removed Jump");
             currActions.Remove(Jump);
+        }
+        if (simMovement.hasDashed)
+        {
+            currActions.Remove(DashR);
+            currActions.Remove(DashUR);
+            currActions.Remove(DashU);
+            currActions.Remove(DashUL);
+            currActions.Remove(DashL);
         }
 
         return currActions;
@@ -310,9 +357,16 @@ public class SearchandReplay : MonoBehaviour {
     }
     
     // get sim player runtime state
-    public State GetSimPlayerState()
+    public State GetSimPlayerState(Action action)
     {
-        return new State(simPlayer.transform.position, simPlayerRB.velocity, false, false, false);
+        bool j = false;
+        bool d = false;
+        bool c = false;
+
+        if (action.Equals(Jump)) j = true;
+        if (action.Equals(DashR) || action.Equals(DashUR) || action.Equals(DashU) || action.Equals(DashUL) || action.Equals(DashU)) d = true;
+
+        return new State(simPlayer.transform.position, simPlayerRB.velocity, j, d, c);
     }
 
     public class Node {
