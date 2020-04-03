@@ -39,7 +39,7 @@ public class SearchandReplay : MonoBehaviour {
 
     private Collision simCollision;
 
-    bool beginSearch = false;
+    bool beginSearch = true;
     bool isReplaying = false;
     bool replayDone = false;
 
@@ -139,14 +139,15 @@ public class SearchandReplay : MonoBehaviour {
     private void Start()
     {
         //nodeReplayQueue = RunAStar();
+        //TakeAction(Jump, playerMovement);
     }
 
     // Action Sets
     void PrepareAStar()
     {
-        WalkR = new Action(ActionType.WalkR, 100);
-        WalkL = new Action(ActionType.WalkL, 100);
-        Jump = new Action(ActionType.Jump, 50);
+        WalkR = new Action(ActionType.WalkR, 10);
+        WalkL = new Action(ActionType.WalkL, 10);
+        Jump = new Action(ActionType.Jump, 8);
         DashR = new Action(ActionType.Dash, 0);
         DashUR = new Action(ActionType.Dash, 1);
         DashU = new Action(ActionType.Dash, 2);
@@ -185,7 +186,7 @@ public class SearchandReplay : MonoBehaviour {
 
     void FixedUpdate() 
     {
-        if (Input.GetKeyDown(KeyCode.P)) 
+        if (Input.GetKeyDown(KeyCode.P))
         {
             beginSearch = true;
             mainPlayerRB.constraints = RigidbodyConstraints2D.None;
@@ -194,7 +195,8 @@ public class SearchandReplay : MonoBehaviour {
             simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
 
-        if (replayDone || isReplaying) {
+        if (replayDone || isReplaying)
+        {
             return;
         }
 
@@ -486,6 +488,7 @@ public class SearchandReplay : MonoBehaviour {
         {
             Vector2 walkDir = new Vector2(dir, 0);
             agentMovement.Walk(walkDir);
+            Debug.Log(i);
 
             // This line might be problematic!
             yield return new WaitForFixedUpdate();
