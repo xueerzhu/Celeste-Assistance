@@ -39,7 +39,7 @@ public class SearchandReplay : MonoBehaviour {
 
     private Collision simCollision;
 
-    bool beginSearch = true;
+    bool beginSearch = false;
     bool isReplaying = false;
     bool replayDone = false;
 
@@ -132,7 +132,7 @@ public class SearchandReplay : MonoBehaviour {
 
         mainPlayerRB = mainPlayer.GetComponent<Rigidbody2D>();
         simPlayerRB = simPlayer.GetComponent<Rigidbody2D>();
-        
+
         PrepareAStar();
     }
 
@@ -184,7 +184,7 @@ public class SearchandReplay : MonoBehaviour {
         levelGeometry.transform.name = "simLevel";
     }
 
-    void FixedUpdate() 
+    void FixedUpdate()
     {
         if (Input.GetKeyDown(KeyCode.P))
         {
@@ -238,7 +238,7 @@ public class SearchandReplay : MonoBehaviour {
 
     private void RunAStar()
     {
-       
+
         // Keeps searching while it hasn't reached the goal
         if (priorityQueue.Count() != 0)
         {
@@ -253,7 +253,7 @@ public class SearchandReplay : MonoBehaviour {
                 exploredStack.Push(baseState);
                 currentNode.PrintNode();
                 resetActions();
-                
+
                 foreach (var pickedAction in availableActions (actionSets))
                 {
                     //currentNode.state.print();
@@ -264,7 +264,7 @@ public class SearchandReplay : MonoBehaviour {
 
                     // Is it correct to simiulate here?
                     simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
-                   
+
                     float cost = GetHeuristic();
                     State newState = GetSimPlayerState(pickedAction);
                     //newState.print();
@@ -336,7 +336,7 @@ public class SearchandReplay : MonoBehaviour {
 
     private Queue<Node> ReturnAStarResult()
     {
-        // the last explored node should be final node 
+        // the last explored node should be final node
         //Node finalNode = exploredStack.Pop();
         // construct a queue of node base on final node: reverse linked list
         Node pointerNode = finalNode;
@@ -347,7 +347,7 @@ public class SearchandReplay : MonoBehaviour {
         }
         nodeReplayQueue.Enqueue(pointerNode);
         nodeReplayQueue = new Queue<Node>(nodeReplayQueue.Reverse());
-        
+
         //nodeReplayQueue.Dequeue().PrintNode();
         return nodeReplayQueue;
     }
@@ -357,7 +357,7 @@ public class SearchandReplay : MonoBehaviour {
         float heuristic = Vector2.Distance(simPlayer.transform.position, star.transform.position);
         return (float)Math.Round(heuristic, 2);
     }
-    
+
     // get sim player runtime state
     public State GetSimPlayerState(Action action)
     {
@@ -389,7 +389,7 @@ public class SearchandReplay : MonoBehaviour {
         {
             state.print();
             //Debug.Log("heuristic is " + heuristic);
-            
+
         }
     }
 
@@ -423,7 +423,7 @@ public class SearchandReplay : MonoBehaviour {
         //dashed = d;
         //climbing = c;
     }
-    
+
     // dated replay code
     public IEnumerator Replay()
     {
@@ -488,7 +488,6 @@ public class SearchandReplay : MonoBehaviour {
         {
             Vector2 walkDir = new Vector2(dir, 0);
             agentMovement.Walk(walkDir);
-            Debug.Log(i);
 
             // This line might be problematic!
             yield return new WaitForFixedUpdate();
