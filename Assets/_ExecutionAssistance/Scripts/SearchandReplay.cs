@@ -18,13 +18,18 @@ public class SearchandReplay : MonoBehaviour {
 
     [Space]
     [Header("Parameters")]
-    public int simulationSteps = 0;
+    public int simulationSteps = 1;
+
+    public int actionFrameCount = 1;
     public float baseActionCost = 1;
 
     [Space]
     [Header("Bool")]
     public bool reachedGoal = false;
 
+    public bool debug = false;
+    public bool profile = false;
+    
     /// PRIVATE
     private Scene mainScene;
     private Scene simScene;
@@ -42,6 +47,10 @@ public class SearchandReplay : MonoBehaviour {
     bool beginSearch = false;
     bool isReplaying = false;
     bool replayDone = false;
+
+    int spaceSearched = 0;
+    float startTime = 0;
+    public float maxSearchTime = 10f;
 
     [Space]
     [Header("Replay System")]
@@ -69,6 +78,8 @@ public class SearchandReplay : MonoBehaviour {
     Stack<State> exploredStack = new Stack<State>();
     Node finalNode = null;
 
+    WaitForEndOfFrame WaitEndOfFrame = new WaitForEndOfFrame();
+    WaitForFixedUpdate WaitFixedUpdate = new WaitForFixedUpdate();
     public struct Action {
         // One of the possible action types
         public ActionType actionType;
@@ -106,6 +117,7 @@ public class SearchandReplay : MonoBehaviour {
         }
     }
 
+
     private void Awake() {
         // int to dash direction. Go to action struct for explanation
         DashDirectionDict.Add(0, new Vector2(1, 0));
@@ -139,14 +151,15 @@ public class SearchandReplay : MonoBehaviour {
     private void Start()
     {
         //nodeReplayQueue = RunAStar();
+        //TakeAction(Jump, playerMovement);
     }
 
     // Action Sets
     void PrepareAStar()
     {
-        WalkR = new Action(ActionType.WalkR, 100);
-        WalkL = new Action(ActionType.WalkL, 100);
-        Jump = new Action(ActionType.Jump, 50);
+        WalkR = new Action(ActionType.WalkR, actionFrameCount);
+        WalkL = new Action(ActionType.WalkL, actionFrameCount);
+        Jump = new Action(ActionType.Jump, 8);
         DashR = new Action(ActionType.Dash, 0);
         DashUR = new Action(ActionType.Dash, 1);
         DashU = new Action(ActionType.Dash, 2);
@@ -185,21 +198,35 @@ public class SearchandReplay : MonoBehaviour {
 
     void FixedUpdate() 
     {
-        if (Input.GetKeyDown(KeyCode.P)) 
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            SceneManager.LoadScene(mainScene.name);
+        }
+        if (Input.GetKeyDown(KeyCode.P))
         {
             beginSearch = true;
+            startTime = Time.unscaledTime;
+
             mainPlayerRB.constraints = RigidbodyConstraints2D.None;
             mainPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
+            
             simPlayerRB.constraints = RigidbodyConstraints2D.None;
             simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
 
-        if (replayDone || isReplaying) {
+        if (replayDone || isReplaying)
+        {
             return;
         }
 
         if (beginSearch)
         {
+            if (profile && Time.unscaledTime > startTime + maxSearchTime)
+            {
+                print("Spaces searched: " + spaceSearched);
+                return;
+            }
+
             if (reachedGoal)
             {
                 nodeReplayQueue = ReturnAStarResult();
@@ -212,6 +239,7 @@ public class SearchandReplay : MonoBehaviour {
                 if (!isReplaying)
                 {
                     StartCoroutine(ReplayFromNode());
+                    //StartCoroutine(ReplayFromNodeActions());
 
                     // TODO: this is not working
                     // freeze player at paths from astar result, instead of drop due to gravity
@@ -229,8 +257,8 @@ public class SearchandReplay : MonoBehaviour {
         }
         else
         {
-            mainPlayerRB.constraints = RigidbodyConstraints2D.FreezePosition;
-            simPlayerRB.constraints = RigidbodyConstraints2D.FreezePosition;
+            mainPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
+            simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
     }
 
@@ -249,7 +277,8 @@ public class SearchandReplay : MonoBehaviour {
             if (!exploredStack.Contains(baseState))
             {
                 exploredStack.Push(baseState);
-                currentNode.PrintNode();
+                if (debug)
+                    currentNode.PrintNode();
                 resetActions();
                 
                 foreach (var pickedAction in availableActions (actionSets))
@@ -261,13 +290,13 @@ public class SearchandReplay : MonoBehaviour {
                     //Debug.Log(pickedAction.actionType + ", new state is:");
 
                     // Is it correct to simiulate here?
-                    simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+                    //simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
                    
                     float cost = GetHeuristic();
                     State newState = GetSimPlayerState(pickedAction);
                     //newState.print();
 
-                    Node newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost);
+                    Node newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost, pickedAction);
                     if (reachedGoal)
                     {
                         Debug.Log("reached goal");
@@ -276,7 +305,11 @@ public class SearchandReplay : MonoBehaviour {
                     }
 
                     if (!exploredStack.Contains(newNode.state))
+                    {
+                        spaceSearched++;
                         priorityQueue.Enqueue(newNode, cost + newNode.costToGetHere);
+
+                    }
                 }
 
                 //Debug.Log("priority queue is: ");
@@ -357,6 +390,7 @@ public class SearchandReplay : MonoBehaviour {
     }
     
     // get sim player runtime state
+    // !!! Need to add CanDash
     public State GetSimPlayerState(Action action)
     {
         bool j = false;
@@ -375,12 +409,21 @@ public class SearchandReplay : MonoBehaviour {
         public Node prevNode;
         public float heuristic;
         public float costToGetHere;
-
+        public Action action;
+        
         public Node(State mState, Node prev, float heu, float cost) {
             state = mState;
             prevNode = prev;
             heuristic = heu;
             costToGetHere = cost;
+        }
+        
+        public Node(State mState, Node prev, float heu, float cost, Action act) {
+            state = mState;
+            prevNode = prev;
+            heuristic = heu;
+            costToGetHere = cost;
+            action = act;
         }
 
         public void PrintNode()
@@ -391,21 +434,38 @@ public class SearchandReplay : MonoBehaviour {
         }
     }
 
-    public IEnumerator ReplayFromNode() {
+    public IEnumerator ReplayFromNodeActions() {
         isReplaying = true;
         //print("Replay started with " + actionReplayQueue.Count + " actions");
 
         // Replay as long as there is something to replay in the Queue.
         while (nodeReplayQueue.Count > 0) {
             print("Replay started with " + nodeReplayQueue.Count + " node");
-            State currReplayState = nodeReplayQueue.Dequeue().state;
-            UpdateMainPlayer(currReplayState);
-            yield return new WaitForFixedUpdate();
+            Action act = nodeReplayQueue.Dequeue().action;
+            TakeAction(act, playerMovement);
+            yield return null;
         }
+
         isReplaying = false;
         replayDone = true;
     }
 
+    public IEnumerator ReplayFromNode() {
+        isReplaying = true;
+        //print("Replay started with " + actionReplayQueue.Count + " actions");
+        // Replay as long as there is something to replay in the Queue.
+        while (nodeReplayQueue.Count > 0) {
+            print("Replay started with " + nodeReplayQueue.Count + " node");
+            State currReplayState = nodeReplayQueue.Dequeue().state;
+            UpdateMainPlayer(currReplayState);
+            yield return WaitFixedUpdate;
+        }
+        
+        isReplaying = false;
+        replayDone = true;
+    }
+
+    
     void UpdateMainPlayer(State currState) {
         mainPlayer.transform.position = currState.madelinePos;
         //mainPlayerRB.velocity = currState.madelineVel;
@@ -441,13 +501,13 @@ public class SearchandReplay : MonoBehaviour {
                 TakeAction(act, playerMovement);
 
                 // This line is possibly wrong! Might need to wait for end of fixed update.
-                yield return new WaitForEndOfFrame();
+                // yield return WaitEndOfFrame;
             }
             else
             {
                 print("Action already active");
                 // This line is possibly wrong! Might need to wait for end of fixed update.
-                yield return new WaitForEndOfFrame();
+                yield return WaitEndOfFrame;
             }
         }
         isReplaying = false;
@@ -462,19 +522,24 @@ public class SearchandReplay : MonoBehaviour {
         switch (action.actionType)
         {
             case ActionType.WalkL:
-                activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier, agentMovement));
+                //activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier, agentMovement));
+                SimulateWalkForNFrames(-1, action.modifier, agentMovement);
                 break;
             case ActionType.WalkR:
-                activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier, agentMovement));
+                //activeAction = StartCoroutine(ExecuteWalkForNFrames(1, action.modifier, agentMovement));
+                SimulateWalkForNFrames(1, action.modifier, agentMovement);
                 break;
 
             case ActionType.Jump:
-                activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier, agentMovement));
+                //activeAction = StartCoroutine(ExecuteJumpForNFrames(action.modifier, agentMovement));
+                SimulateJumpForNFrames(action.modifier, agentMovement);
                 break;
 
             case ActionType.Dash:
                 Vector2 dir = DashDirectionDict[action.modifier];
-                activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5, agentMovement));
+                //activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5, agentMovement));
+                SimulateDashForNFrames(dir, 5, agentMovement);
+                
                 break;
         }
     }
@@ -486,15 +551,17 @@ public class SearchandReplay : MonoBehaviour {
         {
             Vector2 walkDir = new Vector2(dir, 0);
             agentMovement.Walk(walkDir);
+            // Debug.Log(i);
 
             // This line might be problematic!
-            yield return new WaitForFixedUpdate();
+            yield return WaitFixedUpdate;
 
             //yield return new WaitForSeconds(Time.fixedDeltaTime);
         }
         activeAction = null;
         yield return null;
     }
+
 
     IEnumerator ExecuteJumpForNFrames(int frameCount, Movement agentMovement)
     {
@@ -508,7 +575,7 @@ public class SearchandReplay : MonoBehaviour {
             {
                 agentMovement.WallJump();
             }
-            yield return new WaitForFixedUpdate();
+            yield return WaitFixedUpdate;
         }
         activeAction = null;
         yield return null;
@@ -519,9 +586,44 @@ public class SearchandReplay : MonoBehaviour {
         agentMovement.Dash(dir.x, dir.y);
         for (int i = 0; i < frameCount; i++)
         {
-            yield return new WaitForFixedUpdate();
+            yield return WaitFixedUpdate;
         }
         activeAction = null;
         yield return null;
+    }
+    
+    void SimulateDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement)
+    {
+        agentMovement.Dash(dir.x, dir.y);
+        for (int i = 0; i < frameCount; i++)
+        {
+            simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+        }
+    }
+    void SimulateWalkForNFrames(int dir, int frameCount, Movement agentMovement)
+    {
+        for (int i = 0; i < frameCount; i++)
+        {
+            Vector2 walkDir = new Vector2(dir, 0);
+            agentMovement.Walk(walkDir);
+            simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+        }
+    }
+    
+    
+    void SimulateJumpForNFrames(int frameCount, Movement agentMovement)
+    {
+        for (int i = 0; i < frameCount; i++)
+        {
+            if (!agentMovement.wallGrab)
+            {
+                agentMovement.Jump(Vector2.up, false);
+            }
+            else
+            {
+                agentMovement.WallJump();
+            }
+            simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+        }
     }
  }
