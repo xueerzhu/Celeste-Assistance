@@ -271,12 +271,9 @@ public class SearchandReplay : MonoBehaviour {
 
     private void RunAStar()
     {
-       
         // Keeps searching while it hasn't reached the goal
         if (priorityQueue.Count() != 0)
         {
-            /*Node currentNode = priorityQueue.Dequeue();
-            State baseState = currentNode.state;*/
             currentNode = priorityQueue.Dequeue();
             baseState = currentNode.state;
             
@@ -299,16 +296,12 @@ public class SearchandReplay : MonoBehaviour {
 
                     // Is it correct to simiulate here?
                     //simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
-                   
-                    /*float cost = GetHeuristic();
-                    State newState = GetSimPlayerState(pickedAction);*/
-                    
+
                     cost = GetHeuristic();
                     newState = GetSimPlayerState(pickedAction);
                     
                     //newState.print();
 
-                    /*Node newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost, pickedAction);*/
                     newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost, pickedAction);
                     
                     if (reachedGoal)
