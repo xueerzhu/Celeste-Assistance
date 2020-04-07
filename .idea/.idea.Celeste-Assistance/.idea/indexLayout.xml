@@ -22,8 +22,10 @@
       <Path>.idea</Path>
       <Path>.vs</Path>
       <Path>.vscode</Path>
+      <Path>Gifs</Path>
       <Path>Library</Path>
       <Path>Logs</Path>
+      <Path>Profiling</Path>
       <Path>Temp</Path>
       <Path>obj</Path>
     </explicitExcludes>

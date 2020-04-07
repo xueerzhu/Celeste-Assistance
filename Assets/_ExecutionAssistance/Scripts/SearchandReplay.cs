@@ -261,17 +261,22 @@ public class SearchandReplay : MonoBehaviour {
             simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
         }
     }
+    
+    // var reuse for RunAStar
+    private Node currentNode;
+    private State baseState;
+    float cost;
+    State newState;
+    private Node newNode;
 
     private void RunAStar()
     {
-       
         // Keeps searching while it hasn't reached the goal
         if (priorityQueue.Count() != 0)
         {
-            Node currentNode = priorityQueue.Dequeue();
-
-            State baseState = currentNode.state;
-
+            currentNode = priorityQueue.Dequeue();
+            baseState = currentNode.state;
+            
             //Debug.Log("base state is:");
             //baseState.print();
             if (!exploredStack.Contains(baseState))
@@ -281,7 +286,7 @@ public class SearchandReplay : MonoBehaviour {
                     currentNode.PrintNode();
                 resetActions();
                 
-                foreach (var pickedAction in availableActions (actionSets))
+                foreach (var pickedAction in availableActions(actionSets))
                 {
                     //currentNode.state.print();
                     RestoreState(baseState);
@@ -291,15 +296,17 @@ public class SearchandReplay : MonoBehaviour {
 
                     // Is it correct to simiulate here?
                     //simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
-                   
-                    float cost = GetHeuristic();
-                    State newState = GetSimPlayerState(pickedAction);
+
+                    cost = GetHeuristic();
+                    newState = GetSimPlayerState(pickedAction);
+                    
                     //newState.print();
 
-                    Node newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost, pickedAction);
+                    newNode = new Node(newState, currentNode, cost, currentNode.costToGetHere + baseActionCost, pickedAction);
+                    
                     if (reachedGoal)
                     {
-                        Debug.Log("reached goal");
+                        //Debug.Log("reached goal");
                         finalNode = newNode;
                         return;
                     }
@@ -337,11 +344,11 @@ public class SearchandReplay : MonoBehaviour {
         actionSets.Add(DashUL);
         actionSets.Add(DashL);
     }
-
+    
     private List<Action> availableActions (List<Action> actions)
     {
         List<Action> currActions = actions;
-
+        
         if (!simMovement.canMove)
         {
             //Debug.Log("Removed Walking");

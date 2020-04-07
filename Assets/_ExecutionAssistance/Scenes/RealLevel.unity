@@ -29771,7 +29771,7 @@ MonoBehaviour:
   mainPlayer: {fileID: 213030893}
   levelToCopy: {fileID: 1059521543}
   star: {fileID: 1685797297}
-  simulationSteps: 5
+  simulationSteps: 8
   actionFrameCount: 8
   baseActionCost: 0.5
   reachedGoal: 0

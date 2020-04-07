@@ -41,6 +41,9 @@ public class Movement : MonoBehaviour
     public ParticleSystem jumpParticle;
     public ParticleSystem wallJumpParticle;
     public ParticleSystem slideParticle;
+    
+    private Transform slideParticleParent;
+    
 
     // Start is called before the first frame update
     void Awake()
@@ -48,6 +51,7 @@ public class Movement : MonoBehaviour
         coll = GetComponent<Collision>();
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponentInChildren<AnimationScript>();
+        slideParticleParent = slideParticle.transform.parent;
     }
 
     // Update is called once per frame
@@ -264,9 +268,11 @@ public class Movement : MonoBehaviour
         }
     }
 
+
     public void Jump(Vector2 dir, bool wall)
     {
-        slideParticle.transform.parent.localScale = new Vector3(ParticleSide(), 1, 1);
+        
+        slideParticleParent.localScale = new Vector3(ParticleSide(), 1, 1);
         ParticleSystem particle = wall ? wallJumpParticle : jumpParticle;
 
         rb.velocity = new Vector2(rb.velocity.x, 0);
