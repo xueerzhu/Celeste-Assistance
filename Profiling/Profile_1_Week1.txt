@@ -1,0 +1,14 @@
+Coroutine
+simluation_steps, expanded_nodes, (with debug on) 
+1,917 
+2,1513
+4,1651  (1537)
+32,1925 (1605)
+
+Normal Frame
+1 1014
+2 2030
+4 3302
+6 3621
+8 3569
+32 3845
