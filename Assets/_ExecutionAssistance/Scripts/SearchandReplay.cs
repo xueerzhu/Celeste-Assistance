@@ -298,7 +298,7 @@ public class SearchandReplay : MonoBehaviour {
                     //Debug.Log(pickedAction.actionType + ", new state is:");
 
                     // Is it correct to simiulate here?
-                    //simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+                    // simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
                    
                     /*float cost = GetHeuristic();
                     State newState = GetSimPlayerState(pickedAction);*/
@@ -536,7 +536,7 @@ public class SearchandReplay : MonoBehaviour {
         switch (action.actionType)
         {
             case ActionType.WalkL:
-                //activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier, agentMovement));
+                // activeAction = StartCoroutine(ExecuteWalkForNFrames(-1, action.modifier, agentMovement));
                 SimulateWalkForNFrames(-1, action.modifier, agentMovement);
                 break;
             case ActionType.WalkR:
@@ -569,6 +569,7 @@ public class SearchandReplay : MonoBehaviour {
 
             // This line might be problematic!
             yield return WaitFixedUpdate;
+            // THERE IS NO SIMULATION BEING DONE  HERE!
 
             //yield return new WaitForSeconds(Time.fixedDeltaTime);
         }
