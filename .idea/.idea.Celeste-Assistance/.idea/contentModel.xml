@@ -8,7 +8,9 @@
       <e p="Assets" t="Include">
         <e p="_ExecutionAssistance" t="Include">
           <e p="Scripts" t="Include">
+            <e p="SearchandReplay.Action.cs" t="Include" />
             <e p="SearchandReplay.cs" t="Include" />
+            <e p="SearchandReplay.Node.cs" t="Include" />
           </e>
         </e>
         <e p="MixAndJam" t="Include">

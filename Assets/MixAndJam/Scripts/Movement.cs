@@ -43,9 +43,22 @@ public class Movement : MonoBehaviour
     public ParticleSystem slideParticle;
     
     private Transform slideParticleParent;
-    
+
+    [HideInInspector]
+    public bool simulated = false;
+
+    BetterJumping betterJumping;
+    RippleEffect rippleEffect;
+    Camera camera1;
+
 
     // Start is called before the first frame update
+    void Start() {
+        camera1 = Camera.main;
+        rippleEffect = FindObjectOfType<RippleEffect>();
+        betterJumping = GetComponent<BetterJumping>();
+    }
+
     void Awake()
     {
         coll = GetComponent<Collision>();
@@ -171,18 +184,19 @@ public class Movement : MonoBehaviour
 
     public void Dash(float x, float y)
     {
-        Camera.main.transform.DOComplete();
-        Camera.main.transform.DOShakePosition(.2f, .5f, 14, 90, false, true);
-        // FindObjectOfType<RippleEffect>().Emit(Camera.main.WorldToViewportPoint(transform.position));
-
+        if (!simulated) {
+            camera1.transform.DOComplete();
+            camera1.transform.DOShakePosition(.2f, .5f, 14, 90, false, true);
+            rippleEffect.Emit(camera1.WorldToViewportPoint(transform.position));
+            anim.SetTrigger("dash");
+        }
         hasDashed = true;
-
-        anim.SetTrigger("dash");
-
-        rb.velocity = Vector2.zero;
+        var velocity = rb.velocity;
+        velocity = Vector2.zero;
         Vector2 dir = new Vector2(x, y);
 
-        rb.velocity += dir.normalized * dashSpeed;
+        velocity += dir.normalized * dashSpeed;
+        rb.velocity = velocity;
         StartCoroutine(DashWait());
     }
 
@@ -191,16 +205,20 @@ public class Movement : MonoBehaviour
         // FindObjectOfType<GhostTrail>().ShowGhost();
         StartCoroutine(GroundDash());
         DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
-
-        // dashParticle.Play();
+        
+        if (!simulated) {
+            dashParticle.Play();
+        }
         rb.gravityScale = 0;
-        GetComponent<BetterJumping>().enabled = false;
+        betterJumping.enabled = false;
         wallJumped = true;
         isDashing = true;
 
         yield return new WaitForSeconds(.3f);
 
-        dashParticle.Stop();
+        if (!simulated) {
+            dashParticle.Play();
+        }
         rb.gravityScale = 3;
         // GetComponent<BetterJumping>().enabled = true;
         wallJumped = false;
