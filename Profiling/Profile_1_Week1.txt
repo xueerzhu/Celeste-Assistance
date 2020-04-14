@@ -12,3 +12,19 @@ Normal Frame
 6 3621
 8 3569
 32 3845
+
+Removed Safety Checks (is state already been visited, is curState already in queue) and Refactored [10th April]
+1 1012
+2 2012
+4 4014
+8 8018
+32 32037
+64 41413
+
+Moved From Fixed Update to Update
+1 1808
+2 3495
+4 6455
+8 11145
+32 28522
+64 33866

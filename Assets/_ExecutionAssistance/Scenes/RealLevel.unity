@@ -4706,6 +4706,7 @@ MonoBehaviour:
   jumpParticle: {fileID: 708599380}
   wallJumpParticle: {fileID: 423702326}
   slideParticle: {fileID: 740709920}
+  simulated: 0
 --- !u!114 &213030898
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29771,12 +29772,14 @@ MonoBehaviour:
   mainPlayer: {fileID: 213030893}
   levelToCopy: {fileID: 1059521543}
   star: {fileID: 1685797297}
-  simulationSteps: 5
-  actionFrameCount: 8
+  simulationSteps: 128
+  actionFrameCount: 1
   baseActionCost: 0.5
   reachedGoal: 0
   debug: 0
-  profile: 1
+  profile: 0
+  loopingReplay: 0
+  isGhostVisualized: 1
   maxSearchTime: 10
 --- !u!4 &1617902332
 Transform:
@@ -29870,7 +29873,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1685797297}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 9.08, y: 4.08, z: 0}
+  m_LocalPosition: {x: 8.36, y: 4.18, z: 0}
   m_LocalScale: {x: 0.061212566, y: 0.061212566, z: 0.061212566}
   m_Children: []
   m_Father: {fileID: 1059521545}
@@ -29883,7 +29886,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1685797297}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 0
