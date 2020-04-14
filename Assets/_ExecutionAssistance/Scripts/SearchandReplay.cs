@@ -104,7 +104,6 @@ public partial class SearchandReplay : MonoBehaviour {
         }
     }
 
-
     private void Awake() {
         // int to dash direction. Go to action struct for explanation
         DashDirectionDict.Add(0, new Vector2(1, 0));

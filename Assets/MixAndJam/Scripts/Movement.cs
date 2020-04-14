@@ -41,7 +41,7 @@ public class Movement : MonoBehaviour
     public ParticleSystem jumpParticle;
     public ParticleSystem wallJumpParticle;
     public ParticleSystem slideParticle;
-    
+
     private Transform slideParticleParent;
 
     [HideInInspector]
@@ -57,6 +57,7 @@ public class Movement : MonoBehaviour
         camera1 = Camera.main;
         rippleEffect = FindObjectOfType<RippleEffect>();
         betterJumping = GetComponent<BetterJumping>();
+        Debug.Log("Movement Start");
     }
 
     void Awake()
@@ -65,6 +66,7 @@ public class Movement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponentInChildren<AnimationScript>();
         slideParticleParent = slideParticle.transform.parent;
+        rb.velocity = Vector2.zero;
     }
 
     // Update is called once per frame
@@ -140,6 +142,8 @@ public class Movement : MonoBehaviour
 
         if (Input.GetButtonDown("Fire1") && !hasDashed)
         {
+            Debug.Log("Dashed: " + xRaw + ", " + yRaw);
+            hasDashed = true;
             if(xRaw != 0 || yRaw != 0)
                 Dash(xRaw, yRaw);
         }
@@ -204,8 +208,9 @@ public class Movement : MonoBehaviour
     {
         // FindObjectOfType<GhostTrail>().ShowGhost();
         StartCoroutine(GroundDash());
-        DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
-        
+        //DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
+        rb.drag = 13f;
+
         if (!simulated) {
             dashParticle.Play();
         }
@@ -213,14 +218,16 @@ public class Movement : MonoBehaviour
         betterJumping.enabled = false;
         wallJumped = true;
         isDashing = true;
+        //Debug.Log(rb.velocity);
 
         yield return new WaitForSeconds(.3f);
+        rb.drag = 0;
 
         if (!simulated) {
             dashParticle.Play();
         }
         rb.gravityScale = 3;
-        // GetComponent<BetterJumping>().enabled = true;
+        GetComponent<BetterJumping>().enabled = true;
         wallJumped = false;
         isDashing = false;
     }
@@ -289,7 +296,7 @@ public class Movement : MonoBehaviour
 
     public void Jump(Vector2 dir, bool wall)
     {
-        
+
         slideParticleParent.localScale = new Vector3(ParticleSide(), 1, 1);
         ParticleSystem particle = wall ? wallJumpParticle : jumpParticle;
 
