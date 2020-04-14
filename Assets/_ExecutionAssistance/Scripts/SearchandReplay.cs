@@ -377,11 +377,10 @@ public partial class SearchandReplay : MonoBehaviour {
 
             State currReplayState = currentReplayNode.state;
             
-            
             TakeAction(act, playerMovement);
             UpdateMainPlayer(currReplayState);
             
-            yield return new WaitForFrames(180); // give action 180 frames to replay
+            yield return new WaitForFrames(10); // give action 180 frames to replay
             Debug.Log("action counter:" + count);
             count++;
         }
@@ -523,23 +522,6 @@ public partial class SearchandReplay : MonoBehaviour {
             }
 
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
-        }
-    }
-    public class WaitForFrames : CustomYieldInstruction
-    {
-        private int _targetFrameCount;
- 
-        public WaitForFrames(int numberOfFrames)
-        {
-            _targetFrameCount = Time.frameCount + numberOfFrames;
-        }
- 
-        public override bool keepWaiting
-        {
-            get
-            {
-                return Time.frameCount < _targetFrameCount;
-            }
         }
     }
 }
