@@ -29778,7 +29778,7 @@ MonoBehaviour:
   reachedGoal: 0
   debug: 0
   profile: 0
-  loopingReplay: 0
+  loopingReplay: 1
   isGhostVisualized: 1
   maxSearchTime: 10
 --- !u!4 &1617902332
@@ -29886,7 +29886,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1685797297}
-  m_Enabled: 0
+  m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
   m_IsTrigger: 0
