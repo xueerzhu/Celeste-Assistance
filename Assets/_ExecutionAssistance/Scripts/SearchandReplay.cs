@@ -5,11 +5,14 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Priority_Queue;
 using System.Linq;
+using UnityEngine.UI;
+
 
 public partial class SearchandReplay : MonoBehaviour {
     [Header("Public References")] public GameObject mainPlayer;
     public GameObject levelToCopy;
     public GameObject star;
+    public Text replayActionText;
 
     Rigidbody2D mainPlayerRB;
     Rigidbody2D simPlayerRB;
@@ -43,7 +46,7 @@ public partial class SearchandReplay : MonoBehaviour {
     SpriteRenderer simRenderer;
 
     bool isSearching = false;
-    bool isReplaying = false;
+    [SerializeField] bool isReplaying = false;
 
     int spaceSearched = 0;
     float startTime = 0;
@@ -199,10 +202,10 @@ public partial class SearchandReplay : MonoBehaviour {
             nodeReplayQueue = ReturnAStarResult();
             printFoundPath();
 
-            StartCoroutine(ReplayFromNode());
+            StartCoroutine(ReplayFromNodeActions());
             // TODO: this is not working
             // freeze player at paths from astar result, instead of drop due to gravity
-            mainPlayer.transform.position = mainPlayer.transform.position;
+            mainPlayer.transform.position = simPlayer.transform.position;
         }
 
         if (isSearching) {
@@ -356,29 +359,46 @@ public partial class SearchandReplay : MonoBehaviour {
         return new State(simPlayer.transform.position, simPlayerRB.velocity, j, d, c);
     }
 
-    public IEnumerator ReplayFromNodeActions() {
+    public IEnumerator ReplayFromNodeActions()
+    {
+        //mainPlayerRB.isKinematic = true;
         isReplaying = true;
-
         // Replay as long as there is something to replay in the Queue.
+        int count = 1;
+        bool updateFirst = true;
         while (nodeReplayQueue.Count > 0) {
             print("Replay started with " + nodeReplayQueue.Count + " node");
-            Action act = nodeReplayQueue.Dequeue().action;
+            
+            Node currentReplayNode = nodeReplayQueue.Dequeue();
+            currentReplayNode.PrintNode();
+            
+            Action act = currentReplayNode.action;
+
+            State currReplayState = currentReplayNode.state;
+            
             TakeAction(act, playerMovement);
-            yield return null;
+            UpdateMainPlayer(currReplayState);
+            
+            yield return new WaitForFrames(10); // give action 180 frames to replay
+            Debug.Log("action counter:" + count);
+            count++;
         }
-
         isReplaying = false;
+        
+        if (!loopingReplay)
+            reachedGoal = false;
     }
-
+    
     public IEnumerator ReplayFromNode() {
         isReplaying = true;
         while (nodeReplayQueue.Count > 0) {
             print("Replay started with " + nodeReplayQueue.Count + " node");
             State currReplayState = nodeReplayQueue.Dequeue().state;
             UpdateMainPlayer(currReplayState);
-            yield return WaitFixedUpdate;
+            yield return WaitEndOfFrame;
         }
         isReplaying = false;
+        
         if (!loopingReplay)
             reachedGoal = false;
     }
@@ -482,6 +502,7 @@ public partial class SearchandReplay : MonoBehaviour {
     }
 
     void SimulateWalkForNFrames(int dir, int frameCount, Movement agentMovement) {
+        Debug.Log("walk for Frame:" + frameCount);
         for (int i = 0; i < frameCount; i++) {
             Vector2 walkDir = new Vector2(dir, 0);
             agentMovement.Walk(walkDir);
