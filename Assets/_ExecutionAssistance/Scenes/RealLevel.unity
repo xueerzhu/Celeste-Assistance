@@ -4693,6 +4693,8 @@ MonoBehaviour:
   slideSpeed: 1
   wallJumpLerp: 5
   dashSpeed: 40
+  dashTimer: 0
+  maxDash: 1
   canMove: 1
   wallGrab: 0
   wallJumped: 0
