@@ -19,7 +19,7 @@ public class Movement : MonoBehaviour
     public float wallJumpLerp = 10;
     public float dashSpeed = 20;
     public float dashTimer = 0;
-    public float maxDash = 1f;
+    public float maxDash = .3f;
 
     [Space]
     [Header("Booleans")]
@@ -152,7 +152,7 @@ public class Movement : MonoBehaviour
 
         if (isDashing)
         {
-            dashTimer += Time.deltaTime * 3;
+            dashTimer += Time.deltaTime;
             if (dashTimer >= maxDash)
             {
                 DashEnd();
