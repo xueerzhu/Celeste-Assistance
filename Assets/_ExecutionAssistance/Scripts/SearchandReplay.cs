@@ -379,8 +379,8 @@ public partial class SearchandReplay : MonoBehaviour {
             TakeAction(act, playerMovement);
             UpdateMainPlayer(currReplayState);
             
-            yield return new WaitForFrames(10); // give action 180 frames to replay
-            Debug.Log("action counter:" + count);
+            yield return new WaitForFrames(act.modifier); // gives it the exact number frames it simulated to replay 
+            //Debug.Log("action counter:" + count);
             count++;
         }
         isReplaying = false;
@@ -442,9 +442,9 @@ public partial class SearchandReplay : MonoBehaviour {
                 break;
 
             case ActionType.Dash:
-                Vector2 dir = DashDirectionDict[action.modifier];
+                Vector2 dir = DashDirectionDict[action.modifier]; // this modifier determines direction
                 //activeAction = StartCoroutine(ExecuteDashForNFrames(dir, 5, agentMovement));
-                SimulateDashForNFrames(dir, 5, agentMovement);
+                SimulateDashForNFrames(dir, 5, agentMovement);  // 5 is harded dash frame length
 
                 break;
         }
@@ -467,8 +467,7 @@ public partial class SearchandReplay : MonoBehaviour {
         activeAction = null;
         yield return null;
     }
-
-
+    
     IEnumerator ExecuteJumpForNFrames(int frameCount, Movement agentMovement) {
         for (int i = 0; i < frameCount; i++) {
             if (!agentMovement.wallGrab) {
