@@ -305,11 +305,13 @@ public partial class SearchandReplay : MonoBehaviour {
             currActions.Remove(WalkL);
         }
 
+        // If not on the ground, simulation can't jump
         if (!simCollision.onGround) {
             //Debug.Log("Removed Jump");
             currActions.Remove(Jump);
         }
 
+        // If dashed and hasn't touched the ground, simulation can't dash
         if (simMovement.hasDashed) {
             currActions.Remove(DashR);
             currActions.Remove(DashUR);
