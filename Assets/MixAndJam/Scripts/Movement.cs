@@ -18,6 +18,8 @@ public class Movement : MonoBehaviour
     public float slideSpeed = 5;
     public float wallJumpLerp = 10;
     public float dashSpeed = 20;
+    public float dashTimer = 0;
+    public float maxDash = .3f;
 
     [Space]
     [Header("Booleans")]
@@ -148,6 +150,15 @@ public class Movement : MonoBehaviour
                 Dash(xRaw, yRaw);
         }
 
+        if (isDashing)
+        {
+            dashTimer += Time.deltaTime;
+            if (dashTimer >= maxDash)
+            {
+                DashEnd();
+            }
+        }
+
         if (coll.onGround && !groundTouch)
         {
             GroundTouch();
@@ -201,26 +212,17 @@ public class Movement : MonoBehaviour
 
         velocity += dir.normalized * dashSpeed;
         rb.velocity = velocity;
-        StartCoroutine(DashWait());
-    }
 
-    private IEnumerator DashWait()
-    {
-        // FindObjectOfType<GhostTrail>().ShowGhost();
-        StartCoroutine(GroundDash());
-        //DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
         rb.drag = 13f;
-
-        if (!simulated) {
-            dashParticle.Play();
-        }
         rb.gravityScale = 0;
         betterJumping.enabled = false;
         wallJumped = true;
         isDashing = true;
-        //Debug.Log(rb.velocity);
+        //StartCoroutine(DashWait());
+    }
 
-        yield return new WaitForSeconds(.3f);
+    public void DashEnd()
+    {
         rb.drag = 0;
 
         if (!simulated) {
@@ -230,7 +232,36 @@ public class Movement : MonoBehaviour
         GetComponent<BetterJumping>().enabled = true;
         wallJumped = false;
         isDashing = false;
+        dashTimer = 0;
     }
+
+    // private IEnumerator DashWait()
+    // {
+    //     // FindObjectOfType<GhostTrail>().ShowGhost();
+    //     StartCoroutine(GroundDash());
+    //     //DOVirtual.Float(14, 0, .8f, RigidbodyDrag);
+    //     rb.drag = 13f;
+    //
+    //     if (!simulated) {
+    //         dashParticle.Play();
+    //     }
+    //     rb.gravityScale = 0;
+    //     betterJumping.enabled = false;
+    //     wallJumped = true;
+    //     isDashing = true;
+    //     //Debug.Log(rb.velocity);
+    //
+    //     yield return new WaitForSeconds(.3f);
+    //     rb.drag = 0;
+    //
+    //     if (!simulated) {
+    //         dashParticle.Play();
+    //     }
+    //     rb.gravityScale = 3;
+    //     GetComponent<BetterJumping>().enabled = true;
+    //     wallJumped = false;
+    //     isDashing = false;
+    // }
 
     public IEnumerator GroundDash()
     {
