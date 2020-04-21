@@ -11,6 +11,7 @@
             <e p="SearchandReplay.Action.cs" t="Include" />
             <e p="SearchandReplay.cs" t="Include" />
             <e p="SearchandReplay.Node.cs" t="Include" />
+            <e p="WaitForFrames.cs" t="Include" />
           </e>
         </e>
         <e p="MixAndJam" t="Include">
