@@ -324,7 +324,6 @@ public class Movement : MonoBehaviour
         }
     }
 
-
     public void Jump(Vector2 dir, bool wall)
     {
 

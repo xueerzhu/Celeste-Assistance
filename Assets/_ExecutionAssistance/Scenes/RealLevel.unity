@@ -29841,8 +29841,8 @@ MonoBehaviour:
   levelToCopy: {fileID: 1059521543}
   star: {fileID: 1685797297}
   replayActionText: {fileID: 0}
-  simulationSteps: 128
-  actionFrameCount: 4
+  simulationSteps: 1
+  actionFrameCount: 1
   baseActionCost: 0.5
   reachedGoal: 0
   debug: 0
