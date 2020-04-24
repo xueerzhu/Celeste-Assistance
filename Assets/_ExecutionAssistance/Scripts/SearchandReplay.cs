@@ -90,21 +90,23 @@ public partial class SearchandReplay : MonoBehaviour {
         // One of the possible action types
         public Vector2 madelinePos;
         public Vector2 madelineVel;
-        public bool jumped;
-        public bool dashed;
-        public bool climbing;
+        public bool canMove;
+        public bool onGround;
+        public bool hasDashed;
+        public bool onWall;
 
-        public State(Vector2 pos, Vector2 vel, bool j, bool d, bool c) {
+        public State(Vector2 pos, Vector2 vel, bool onground, bool candash, bool canmove, bool onwall) {
             madelinePos = pos;
             madelineVel = vel;
-            jumped = j;
-            dashed = d;
-            climbing = c;
+            canMove = canmove;
+            hasDashed = candash;
+            onGround = onground;
+            onWall = onwall;
         }
 
         public void print() {
-            Debug.Log("Pos: " + madelinePos + " Vel: " + madelineVel + ", Jump: " + jumped + ", Dash: " + dashed +
-                      ", Climb: " + climbing);
+            Debug.Log("Pos: " + madelinePos + " Vel: " + madelineVel + ", Jump: " + canMove + ", Dash: " + hasDashed +
+                      ", Climb: " + onGround);
         }
     }
 
@@ -268,6 +270,7 @@ public partial class SearchandReplay : MonoBehaviour {
                 currentNode.PrintNode();
 
             resetActions();
+            RestoreState(currentState);
             foreach (var pickedAction in availableActions(actionSets)) {
                 RestoreState(currentState);
                 TakeAction(pickedAction, simMovement);
@@ -309,11 +312,13 @@ public partial class SearchandReplay : MonoBehaviour {
             currActions.Remove(WalkL);
         }
 
+        // If not on the ground, simulation can't jump
         if (!simCollision.onGround) {
             //Debug.Log("Removed Jump");
             currActions.Remove(Jump);
         }
 
+        // If dashed and hasn't touched the ground, simulation can't dash
         if (simMovement.hasDashed) {
             currActions.Remove(DashR);
             currActions.Remove(DashUR);
@@ -349,15 +354,16 @@ public partial class SearchandReplay : MonoBehaviour {
     // get sim player runtime state
     // !!! Need to add CanDash
     public State GetSimPlayerState(Action action) {
-        bool j = false;
-        bool d = false;
-        bool c = false;
+        bool canMove = simMovement.canMove;
+        bool onGround = simCollision.onGround;
+        bool hasDashed = simMovement.hasDashed;
+        bool onWall = simCollision.onWall;
 
-        if (action.Equals(Jump)) j = true;
-        if (action.Equals(DashR) || action.Equals(DashUR) || action.Equals(DashU) || action.Equals(DashUL) ||
-            action.Equals(DashU)) d = true;
+        // if (action.Equals(Jump)) j = true;
+        // if (action.Equals(DashR) || action.Equals(DashUR) || action.Equals(DashU) || action.Equals(DashUL) ||
+        //     action.Equals(DashU)) d = true;
 
-        return new State(simPlayer.transform.position, simPlayerRB.velocity, j, d, c);
+        return new State(simPlayer.transform.position, simPlayerRB.velocity, onGround, hasDashed, canMove, onWall);
     }
 
     public IEnumerator ReplayFromNodeActions()
@@ -417,15 +423,14 @@ public partial class SearchandReplay : MonoBehaviour {
         simPlayer.transform.position = state.madelinePos;
         simPlayerRB.velocity = state.madelineVel;
 
-        //jumped = j;
-        //dashed = d;
-        //climbing = c;
+        simMovement.canMove = state.canMove;
+        simCollision.onGround = state.onGround; 
+        simCollision.onWall = state.onWall; 
+        simMovement.hasDashed = state.hasDashed;
     }
 
 
     Coroutine activeAction = null;
-
-
 
     // Given an action decides how to make the player game object execute it.
     void TakeAction(Action action, Movement agentMovement) {
@@ -498,6 +503,8 @@ public partial class SearchandReplay : MonoBehaviour {
     }
 
     void SimulateDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement) {
+        Debug.Log("Dashed in search!");
+
         agentMovement.Dash(dir.x, dir.y);
         for (int i = 0; i < frameCount; i++) {
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
@@ -505,7 +512,6 @@ public partial class SearchandReplay : MonoBehaviour {
     }
 
     void SimulateWalkForNFrames(int dir, int frameCount, Movement agentMovement) {
-        Debug.Log("walk for Frame:" + frameCount);
         for (int i = 0; i < frameCount; i++) {
             Vector2 walkDir = new Vector2(dir, 0);
             agentMovement.Walk(walkDir);
@@ -515,6 +521,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
 
     void SimulateJumpForNFrames(int frameCount, Movement agentMovement) {
+        Debug.Log("Jumped in search!");
         for (int i = 0; i < frameCount; i++) {
             if (!agentMovement.wallGrab) {
                 agentMovement.Jump(Vector2.up, false);
