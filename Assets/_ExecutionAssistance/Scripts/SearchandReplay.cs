@@ -377,10 +377,11 @@ public partial class SearchandReplay : MonoBehaviour {
             State currReplayState = currentReplayNode.state;
             
             TakeAction(act, playerMovement);
+            Debug.Log("Replaying action:" + act.actionType);
             UpdateMainPlayer(currReplayState);
             
             yield return new WaitForFrames(act.modifier); // gives it the exact number frames it simulated to replay 
-            //Debug.Log("action counter:" + count);
+            
             count++;
         }
         isReplaying = false;
