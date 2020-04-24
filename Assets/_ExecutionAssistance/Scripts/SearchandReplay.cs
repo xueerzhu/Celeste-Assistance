@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Priority_Queue;
 using System.Linq;
+using TMPro;
 using UnityEngine.UI;
 
 
@@ -12,7 +13,7 @@ public partial class SearchandReplay : MonoBehaviour {
     [Header("Public References")] public GameObject mainPlayer;
     public GameObject levelToCopy;
     public GameObject star;
-    public Text replayActionText;
+    public TextMeshProUGUI replayActionText;
 
     Rigidbody2D mainPlayerRB;
     Rigidbody2D simPlayerRB;
@@ -378,6 +379,8 @@ public partial class SearchandReplay : MonoBehaviour {
             
             TakeAction(act, playerMovement);
             Debug.Log("Replaying action:" + act.actionType);
+            replayActionText.text = count + ": " + act.actionType.ToString();
+            
             UpdateMainPlayer(currReplayState);
             
             yield return new WaitForFrames(act.modifier); // gives it the exact number frames it simulated to replay 
