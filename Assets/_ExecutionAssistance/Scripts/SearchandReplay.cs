@@ -63,7 +63,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
     StringBuilder sb = new StringBuilder("", 20);
     public float cellSize = .5f;
-    Hashtable queueCheck = new Hashtable();
+    Dictionary<string, bool> queueCheck = new Dictionary<string, bool>();
     public bool hashOptimization = true;
     public enum ActionType {
         WalkR,
@@ -107,6 +107,7 @@ public partial class SearchandReplay : MonoBehaviour {
             hasDashed = candash;
             onGround = onground;
             onWall = onwall;
+            string hashKey;
         }
 
         public void print() {
@@ -190,13 +191,12 @@ public partial class SearchandReplay : MonoBehaviour {
     }
 
     //optimize here
-    string GetSimHashPos() {
+    string GetSimHashKey(State state) {
         sb.Clear();
-        Vector3 pos = simPlayerRB.transform.position;
-        int xCell = Mathf.FloorToInt(pos.x / cellSize);
-        int yCell = Mathf.FloorToInt(pos.y / cellSize);
-        int vxCell = Mathf.FloorToInt(simPlayerRB.velocity.x / cellSize);
-        int vyCell = Mathf.FloorToInt(simPlayerRB.velocity.x / cellSize);
+        int xCell = Mathf.FloorToInt(state.madelinePos.x / cellSize);
+        int yCell = Mathf.FloorToInt(state.madelinePos.y / cellSize);
+        int vxCell = Mathf.FloorToInt(state.madelineVel.x / cellSize);
+        int vyCell = Mathf.FloorToInt(state.madelineVel.y / cellSize);
 
         sb.Append(xCell);
         sb.Append(",");
@@ -206,9 +206,9 @@ public partial class SearchandReplay : MonoBehaviour {
         sb.Append(",");
         sb.Append(vyCell);
         sb.Append(",");
-        sb.Append(simCollision.onGround);
-        sb.Append(simMovement.canMove);
-        sb.Append(simMovement.hasDashed);
+        sb.Append(state.onGround);
+        sb.Append(state.canMove);
+        sb.Append(state.hasDashed);
 
         return sb.ToString();
     }
@@ -290,11 +290,15 @@ public partial class SearchandReplay : MonoBehaviour {
 
     private void RunAStar() {
         for (int i = 0; i < simulationSteps; i++) {
-            print(priorityQueue.Count);
+            print("The priorityQueue length:" + priorityQueue.Count);
 
             currentNode = priorityQueue.Dequeue();
             currentState = currentNode.state;
             exploredStack.Push(currentState);
+            if (hashOptimization) {
+                string has = GetSimHashKey(currentState);
+                queueCheck[has] = false;
+            }
 
             if (debug)
                 currentNode.PrintNode();
@@ -316,7 +320,17 @@ public partial class SearchandReplay : MonoBehaviour {
                 }
 
                 spaceSearched++;
+                string hash = "";
+                if (hashOptimization) {
+                    hash = GetSimHashKey(newState);
+                    if (queueCheck.ContainsKey(hash) && queueCheck[hash]) {
+                        print("hit");
+                        continue;
+                    }
+                }
                 priorityQueue.Enqueue(newNode, cost + newNode.costToGetHere);
+                if (hashOptimization)
+                    queueCheck[hash] = true;
             }
         }
     }
@@ -532,8 +546,6 @@ public partial class SearchandReplay : MonoBehaviour {
     }
 
     void SimulateDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement) {
-        Debug.Log("Dashed in search!");
-
         agentMovement.Dash(dir.x, dir.y);
         for (int i = 0; i < frameCount; i++) {
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
@@ -550,7 +562,6 @@ public partial class SearchandReplay : MonoBehaviour {
 
 
     void SimulateJumpForNFrames(int frameCount, Movement agentMovement) {
-        Debug.Log("Jumped in search!");
         for (int i = 0; i < frameCount; i++) {
             if (!agentMovement.wallGrab) {
                 agentMovement.Jump(Vector2.up, false);
