@@ -30095,7 +30095,7 @@ MonoBehaviour:
   levelToCopy: {fileID: 1059521543}
   star: {fileID: 1685797297}
   replayActionText: {fileID: 17924050}
-  simulationSteps: 128
+  simulationSteps: 64
   actionFrameCount: 4
   baseActionCost: 0.125
   reachedGoal: 0
@@ -30105,6 +30105,8 @@ MonoBehaviour:
   isGhostVisualized: 1
   isReplaying: 0
   maxSearchTime: 10
+  xCellCount: 0
+  yCellCount: 0
 --- !u!4 &1617902332
 Transform:
   m_ObjectHideFlags: 0
@@ -30197,7 +30199,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1685797297}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.87, y: -3.83, z: 0}
+  m_LocalPosition: {x: 8.54, y: 3.8, z: 0}
   m_LocalScale: {x: 0.021865128, y: 0.021865128, z: 0.021865128}
   m_Children: []
   m_Father: {fileID: 1059521545}

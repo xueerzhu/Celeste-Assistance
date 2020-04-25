@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Priority_Queue;
 using System.Linq;
+using System.Text;
 using TMPro;
 using UnityEngine.UI;
 
@@ -60,6 +61,10 @@ public partial class SearchandReplay : MonoBehaviour {
 
     Dictionary<int, Vector2> DashDirectionDict = new Dictionary<int, Vector2>();
 
+    StringBuilder sb = new StringBuilder("", 20);
+    public float cellSize = .5f;
+    Hashtable queueCheck = new Hashtable();
+    public bool hashOptimization = true;
     public enum ActionType {
         WalkR,
         WalkL,
@@ -120,7 +125,8 @@ public partial class SearchandReplay : MonoBehaviour {
         DashDirectionDict.Add(5, new Vector2(-1, -1));
         DashDirectionDict.Add(6, new Vector2(0, -1));
         DashDirectionDict.Add(7, new Vector2(1, -1));
-
+        
+        
         // leave it = true so physics simulated normally in main scene
         //Physics2D.autoSimulation = false;
         mainScene = SceneManager.GetActiveScene();
@@ -183,7 +189,30 @@ public partial class SearchandReplay : MonoBehaviour {
         levelGeometry.transform.name = "simLevel";
     }
 
+    //optimize here
+    string GetSimHashPos() {
+        sb.Clear();
+        Vector3 pos = simPlayerRB.transform.position;
+        int xCell = Mathf.FloorToInt(pos.x / cellSize);
+        int yCell = Mathf.FloorToInt(pos.y / cellSize);
+        int vxCell = Mathf.FloorToInt(simPlayerRB.velocity.x / cellSize);
+        int vyCell = Mathf.FloorToInt(simPlayerRB.velocity.x / cellSize);
 
+        sb.Append(xCell);
+        sb.Append(",");
+        sb.Append(yCell);
+        sb.Append(",");
+        sb.Append(vxCell);
+        sb.Append(",");
+        sb.Append(vyCell);
+        sb.Append(",");
+        sb.Append(simCollision.onGround);
+        sb.Append(simMovement.canMove);
+        sb.Append(simMovement.hasDashed);
+
+        return sb.ToString();
+    }
+    
     void Update() {
         if (Input.GetKeyDown(KeyCode.R)) {
             SceneManager.LoadScene(mainScene.name);
@@ -261,6 +290,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
     private void RunAStar() {
         for (int i = 0; i < simulationSteps; i++) {
+            print(priorityQueue.Count);
 
             currentNode = priorityQueue.Dequeue();
             currentState = currentNode.state;
@@ -305,7 +335,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
     private List<Action> availableActions(List<Action> actions) {
         List<Action> currActions = actions;
-
+        simCollision.checkCollision();
         if (!simMovement.canMove) {
             //Debug.Log("Removed Walking");
             currActions.Remove(WalkR);
@@ -314,7 +344,6 @@ public partial class SearchandReplay : MonoBehaviour {
 
         // If not on the ground, simulation can't jump
         if (!simCollision.onGround) {
-            //Debug.Log("Removed Jump");
             currActions.Remove(Jump);
         }
 
@@ -373,9 +402,9 @@ public partial class SearchandReplay : MonoBehaviour {
         // Replay as long as there is something to replay in the Queue.
         int count = 1;
         bool updateFirst = true;
+        print("Replay started with " + nodeReplayQueue.Count + " node");
+
         while (nodeReplayQueue.Count > 0) {
-            print("Replay started with " + nodeReplayQueue.Count + " node");
-            
             Node currentReplayNode = nodeReplayQueue.Dequeue();
             currentReplayNode.PrintNode();
             
