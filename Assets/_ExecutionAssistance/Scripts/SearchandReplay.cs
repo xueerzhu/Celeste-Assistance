@@ -126,8 +126,8 @@ public partial class SearchandReplay : MonoBehaviour {
         DashDirectionDict.Add(5, new Vector2(-1, -1));
         DashDirectionDict.Add(6, new Vector2(0, -1));
         DashDirectionDict.Add(7, new Vector2(1, -1));
-        
-        
+
+
         // leave it = true so physics simulated normally in main scene
         //Physics2D.autoSimulation = false;
         mainScene = SceneManager.GetActiveScene();
@@ -212,7 +212,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
         return sb.ToString();
     }
-    
+
     void Update() {
         if (Input.GetKeyDown(KeyCode.R)) {
             SceneManager.LoadScene(mainScene.name);
@@ -269,7 +269,7 @@ public partial class SearchandReplay : MonoBehaviour {
     void printFoundPath() {
         Debug.Log("nodeReplayQueue is: ");
         foreach (var node in nodeReplayQueue) {
-            node.PrintNode();
+            //node.PrintNode();
         }
     }
 
@@ -420,28 +420,29 @@ public partial class SearchandReplay : MonoBehaviour {
 
         while (nodeReplayQueue.Count > 0) {
             Node currentReplayNode = nodeReplayQueue.Dequeue();
-            currentReplayNode.PrintNode();
-            
+            //currentReplayNode.PrintNode();
+
             Action act = currentReplayNode.action;
 
             State currReplayState = currentReplayNode.state;
-            
+
             TakeAction(act, playerMovement);
             Debug.Log("Replaying action:" + act.actionType);
+            //Debug.Log(mainPlayerRB.velocity);
             replayActionText.text = count + ": " + act.actionType.ToString();
-            
+
             UpdateMainPlayer(currReplayState);
-            
-            yield return new WaitForFrames(act.modifier); // gives it the exact number frames it simulated to replay 
-            
+
+            yield return new WaitForFrames(act.modifier); // gives it the exact number frames it simulated to replay
+
             count++;
         }
         isReplaying = false;
-        
+
         if (!loopingReplay)
             reachedGoal = false;
     }
-    
+
     public IEnumerator ReplayFromNode() {
         isReplaying = true;
         while (nodeReplayQueue.Count > 0) {
@@ -451,7 +452,7 @@ public partial class SearchandReplay : MonoBehaviour {
             yield return WaitEndOfFrame;
         }
         isReplaying = false;
-        
+
         if (!loopingReplay)
             reachedGoal = false;
     }
@@ -467,8 +468,8 @@ public partial class SearchandReplay : MonoBehaviour {
         simPlayerRB.velocity = state.madelineVel;
 
         simMovement.canMove = state.canMove;
-        simCollision.onGround = state.onGround; 
-        simCollision.onWall = state.onWall; 
+        simCollision.onGround = state.onGround;
+        simCollision.onWall = state.onWall;
         simMovement.hasDashed = state.hasDashed;
     }
 
@@ -502,49 +503,6 @@ public partial class SearchandReplay : MonoBehaviour {
         }
     }
 
-    // The three different actions that are slightly different.
-    IEnumerator ExecuteWalkForNFrames(int dir, int frameCount, Movement agentMovement) {
-        for (int i = 0; i < frameCount; i++) {
-            Vector2 walkDir = new Vector2(dir, 0);
-            agentMovement.Walk(walkDir);
-            // Debug.Log(i);
-
-            // This line might be problematic!
-            yield return WaitFixedUpdate;
-            // THERE IS NO SIMULATION BEING DONE  HERE!
-
-            //yield return new WaitForSeconds(Time.fixedDeltaTime);
-        }
-
-        activeAction = null;
-        yield return null;
-    }
-    
-    IEnumerator ExecuteJumpForNFrames(int frameCount, Movement agentMovement) {
-        for (int i = 0; i < frameCount; i++) {
-            if (!agentMovement.wallGrab) {
-                agentMovement.Jump(Vector2.up, false);
-            }
-            else {
-                agentMovement.WallJump();
-            }
-            yield return WaitFixedUpdate;
-        }
-
-        activeAction = null;
-        yield return null;
-    }
-
-    IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement) {
-        agentMovement.Dash(dir.x, dir.y);
-        for (int i = 0; i < frameCount; i++) {
-            yield return WaitFixedUpdate;
-        }
-
-        activeAction = null;
-        yield return null;
-    }
-
     void SimulateDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement) {
         agentMovement.Dash(dir.x, dir.y);
         for (int i = 0; i < frameCount; i++) {
@@ -560,7 +518,6 @@ public partial class SearchandReplay : MonoBehaviour {
         }
     }
 
-
     void SimulateJumpForNFrames(int frameCount, Movement agentMovement) {
         for (int i = 0; i < frameCount; i++) {
             if (!agentMovement.wallGrab) {
@@ -573,4 +530,47 @@ public partial class SearchandReplay : MonoBehaviour {
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
         }
     }
+
+    // // The three different actions that are slightly different.
+    // IEnumerator ExecuteWalkForNFrames(int dir, int frameCount, Movement agentMovement) {
+    //     for (int i = 0; i < frameCount; i++) {
+    //         Vector2 walkDir = new Vector2(dir, 0);
+    //         agentMovement.Walk(walkDir);
+    //         // Debug.Log(i);
+    //
+    //         // This line might be problematic!
+    //         yield return WaitFixedUpdate;
+    //         // THERE IS NO SIMULATION BEING DONE  HERE!
+    //
+    //         //yield return new WaitForSeconds(Time.fixedDeltaTime);
+    //     }
+    //
+    //     activeAction = null;
+    //     yield return null;
+    // }
+    //
+    // IEnumerator ExecuteJumpForNFrames(int frameCount, Movement agentMovement) {
+    //     for (int i = 0; i < frameCount; i++) {
+    //         if (!agentMovement.wallGrab) {
+    //             agentMovement.Jump(Vector2.up, false);
+    //         }
+    //         else {
+    //             agentMovement.WallJump();
+    //         }
+    //         yield return WaitFixedUpdate;
+    //     }
+    //
+    //     activeAction = null;
+    //     yield return null;
+    // }
+    //
+    // IEnumerator ExecuteDashForNFrames(Vector2 dir, int frameCount, Movement agentMovement) {
+    //     agentMovement.Dash(dir.x, dir.y);
+    //     for (int i = 0; i < frameCount; i++) {
+    //         yield return WaitFixedUpdate;
+    //     }
+    //
+    //     activeAction = null;
+    //     yield return null;
+    // }
 }
