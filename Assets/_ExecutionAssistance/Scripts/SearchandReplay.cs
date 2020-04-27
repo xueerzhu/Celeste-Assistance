@@ -363,6 +363,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
         // If dashed and hasn't touched the ground, simulation can't dash
         if (simMovement.hasDashed) {
+            Debug.Log("Dash Removed");
             currActions.Remove(DashR);
             currActions.Remove(DashUR);
             currActions.Remove(DashU);
@@ -389,8 +390,13 @@ public partial class SearchandReplay : MonoBehaviour {
         return nodeReplayQueue;
     }
 
+    // https://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html
+    // Diagonal distance for heuristic
     private float GetHeuristic() {
-        float heuristic = Vector2.Distance(simPlayer.transform.position, star.transform.position);
+        float dx = Math.Abs(simPlayer.transform.position.x - star.transform.position.x);
+        float dy = Math.Abs(simPlayer.transform.position.y - star.transform.position.y);
+        float heuristic = 1 * (dx + dy) + (1 - 2 * 1) * Math.Min(dx, dy);
+
         return (float) Math.Round(heuristic, 2);
     }
 
@@ -515,6 +521,7 @@ public partial class SearchandReplay : MonoBehaviour {
             Vector2 walkDir = new Vector2(dir, 0);
             agentMovement.Walk(walkDir);
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
+            Debug.Log(mainPlayerRB.position);
         }
     }
 
