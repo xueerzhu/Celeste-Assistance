@@ -15,6 +15,7 @@ public partial class SearchandReplay : MonoBehaviour {
     public GameObject levelToCopy;
     public GameObject star;
     public TextMeshProUGUI replayActionText;
+    public TextMeshProUGUI ghostEnabled;
 
     Rigidbody2D mainPlayerRB;
     Rigidbody2D simPlayerRB;
@@ -49,6 +50,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
     bool isSearching = false;
     [SerializeField] bool isReplaying = false;
+    bool ghost = false;
 
     int spaceSearched = 0;
     float startTime = 0;
@@ -126,7 +128,6 @@ public partial class SearchandReplay : MonoBehaviour {
         DashDirectionDict.Add(5, new Vector2(-1, -1));
         DashDirectionDict.Add(6, new Vector2(0, -1));
         DashDirectionDict.Add(7, new Vector2(1, -1));
-
 
         // leave it = true so physics simulated normally in main scene
         //Physics2D.autoSimulation = false;
@@ -222,8 +223,13 @@ public partial class SearchandReplay : MonoBehaviour {
             StartSearch();
         }
 
-        HandleAStart();
+        if (Input.GetKeyDown(KeyCode.G)) {
+            ghost = !ghost;
+            if (!ghost) ghostEnabled.text = "Ghost: Disabled";
+            else ghostEnabled.text = "Ghost: Enabled";
+        }
 
+        HandleAStart();
     }
 
     void FixedUpdate() {
@@ -234,10 +240,19 @@ public partial class SearchandReplay : MonoBehaviour {
             nodeReplayQueue = ReturnAStarResult();
             printFoundPath();
 
-            StartCoroutine(ReplayFromNodeActions());
-            // TODO: this is not working
-            // freeze player at paths from astar result, instead of drop due to gravity
-            mainPlayer.transform.position = simPlayer.transform.position;
+            if (!ghost)
+            {
+                simRenderer.enabled = false;
+                StartCoroutine(ReplayFromNodeActions());
+                // TODO: this is not working
+                // freeze player at paths from astar result, instead of drop due to gravity
+                mainPlayer.transform.position = simPlayer.transform.position;
+            }
+            else
+            {
+                simRenderer.enabled = true;
+                StartCoroutine(ReplayFromNodeActionsGhost());
+            }
         }
 
         if (isSearching) {
@@ -245,7 +260,6 @@ public partial class SearchandReplay : MonoBehaviour {
 
             RunAStar();
             isSearching = !reachedGoal;
-            simRenderer.enabled = !reachedGoal;
         }
     }
 
@@ -449,6 +463,40 @@ public partial class SearchandReplay : MonoBehaviour {
             reachedGoal = false;
     }
 
+    public IEnumerator ReplayFromNodeActionsGhost()
+    {
+        //mainPlayerRB.isKinematic = true;
+        isReplaying = true;
+        // Replay as long as there is something to replay in the Queue.
+        int count = 1;
+        bool updateFirst = true;
+        print("Replay started with " + nodeReplayQueue.Count + " node");
+
+        while (nodeReplayQueue.Count > 0) {
+            Node currentReplayNode = nodeReplayQueue.Dequeue();
+            //currentReplayNode.PrintNode();
+
+            Action act = currentReplayNode.action;
+
+            State currReplayState = currentReplayNode.state;
+
+            TakeAction(act, simMovement);
+            Debug.Log("Replaying action:" + act.actionType);
+            //Debug.Log(mainPlayerRB.velocity);
+            replayActionText.text = count + ": " + act.actionType.ToString();
+
+            UpdateGhost(currReplayState);
+
+            yield return new WaitForFrames(act.modifier * 4); // gives it the exact number frames it simulated to replay
+
+            count++;
+        }
+        isReplaying = false;
+
+        if (!loopingReplay)
+            reachedGoal = false;
+    }
+
     public IEnumerator ReplayFromNode() {
         isReplaying = true;
         while (nodeReplayQueue.Count > 0) {
@@ -463,9 +511,12 @@ public partial class SearchandReplay : MonoBehaviour {
             reachedGoal = false;
     }
 
-
     void UpdateMainPlayer(State currState) {
         mainPlayer.transform.position = currState.madelinePos;
+    }
+
+    void UpdateGhost(State currState) {
+        simPlayer.transform.position = currState.madelinePos;
     }
 
     void RestoreState(State state) {
