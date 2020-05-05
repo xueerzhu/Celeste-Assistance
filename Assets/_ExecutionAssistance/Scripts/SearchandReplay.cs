@@ -91,7 +91,9 @@ public partial class SearchandReplay : MonoBehaviour {
     Node finalNode = null;
 
     WaitForEndOfFrame WaitEndOfFrame = new WaitForEndOfFrame();
-    WaitForFixedUpdate WaitFixedUpdate = new WaitForFixedUpdate();
+
+    private bool searchisPrepared = false;
+    private GameObject levelGeometry;
 
     public struct State {
         // One of the possible action types
@@ -118,7 +120,7 @@ public partial class SearchandReplay : MonoBehaviour {
         }
     }
 
-    private void Awake() {
+    /*private void Awake() {
         // int to dash direction. Go to action struct for explanation
         DashDirectionDict.Add(0, new Vector2(1, 0));
         DashDirectionDict.Add(1, new Vector2(1, 1));
@@ -151,6 +153,48 @@ public partial class SearchandReplay : MonoBehaviour {
         simRenderer.enabled = false;
 
         PrepareAStar();
+    }*/
+
+    public void PrepareSearch()
+    {
+        if (!searchisPrepared)
+        {
+            // int to dash direction. Go to action struct for explanation
+            DashDirectionDict.Add(0, new Vector2(1, 0));
+            DashDirectionDict.Add(1, new Vector2(1, 1));
+            DashDirectionDict.Add(2, new Vector2(0, 1));
+            DashDirectionDict.Add(3, new Vector2(-1, 1));
+            DashDirectionDict.Add(4, new Vector2(-1, 0));
+            DashDirectionDict.Add(5, new Vector2(-1, -1));
+            DashDirectionDict.Add(6, new Vector2(0, -1));
+            DashDirectionDict.Add(7, new Vector2(1, -1));
+
+            // leave it = true so physics simulated normally in main scene
+            //Physics2D.autoSimulation = false;
+            mainScene = SceneManager.GetActiveScene();
+            simScene = SceneManager.CreateScene("sim-physics-scene", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
+
+            PreparePhysicsScene();
+
+            // Set these when we have the simulation scene working
+            simMovement = simPlayer.GetComponent<Movement>();
+            simMovement.simulated = true;
+
+            playerMovement = mainPlayer.GetComponent<Movement>();
+
+            simCollision = simPlayer.GetComponent<Collision>();
+
+            mainPlayerRB = mainPlayer.GetComponent<Rigidbody2D>();
+            simPlayerRB = simPlayer.GetComponent<Rigidbody2D>();
+
+            simRenderer = simPlayer.GetComponentInChildren<SpriteRenderer>();
+            simRenderer.enabled = false;
+
+            PrepareAStar();
+
+            searchisPrepared = true;
+        }
+        
     }
 
     // Action Sets
@@ -187,8 +231,16 @@ public partial class SearchandReplay : MonoBehaviour {
         simPlayerRenderer = simPlayer.transform.GetChild(0).GetComponent<SpriteRenderer>();
         simPlayerRenderer.color = new Color(0f, 0.31f, 0.29f);
 
-        GameObject levelGeometry = Instantiate(levelToCopy, levelToCopy.transform.position, Quaternion.identity);
+        levelGeometry = Instantiate(levelToCopy, levelToCopy.transform.position, Quaternion.identity);
+        levelGeometry.GetComponentInChildren<SpriteRenderer>().enabled = false;
+        
         levelGeometry.transform.name = "simLevel";
+    }
+    
+    // reposition objective when assist objective has moved
+    public void PrepareObjective()
+    {
+        levelGeometry.transform.position = levelToCopy.transform.position;
     }
 
     //optimize here
@@ -215,24 +267,25 @@ public partial class SearchandReplay : MonoBehaviour {
     }
 
     void Update() {
-        if (Input.GetKeyDown(KeyCode.R)) {
-            SceneManager.LoadScene(mainScene.name);
+        if (searchisPrepared)
+        {
+            if (Input.GetKeyDown(KeyCode.R)) {
+                SceneManager.LoadScene(mainScene.name);
+            }
+
+            if (Input.GetKeyDown(KeyCode.P)) {
+                StartSearch();
+            }
+
+            if (Input.GetKeyDown(KeyCode.G)) {
+                ghost = !ghost;
+                if (!ghost) ghostEnabled.text = "Ghost: Disabled";
+                else ghostEnabled.text = "Ghost: Enabled";
+            }
+
+            HandleAStart();
         }
-
-        if (Input.GetKeyDown(KeyCode.P)) {
-            StartSearch();
-        }
-
-        if (Input.GetKeyDown(KeyCode.G)) {
-            ghost = !ghost;
-            if (!ghost) ghostEnabled.text = "Ghost: Disabled";
-            else ghostEnabled.text = "Ghost: Enabled";
-        }
-
-        HandleAStart();
-    }
-
-    void FixedUpdate() {
+        
     }
 
     void HandleAStart() {
@@ -588,6 +641,7 @@ public partial class SearchandReplay : MonoBehaviour {
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
         }
     }
+    
 
     // // The three different actions that are slightly different.
     // IEnumerator ExecuteWalkForNFrames(int dir, int frameCount, Movement agentMovement) {
