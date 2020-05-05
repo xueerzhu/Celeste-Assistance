@@ -13,6 +13,7 @@ public class AssistHandler : MonoBehaviour
     public GameObject visual;
     public SearchandReplay search;
     public GameObject radius;
+    public Material objectivePlacingMat;
 
     private Image image;
     private bool assistOn;
@@ -20,10 +21,13 @@ public class AssistHandler : MonoBehaviour
     
     private bool objectivePlaced;
     private bool placingObjective;
+    private Material defaultObjectiveMat;
+    private bool canPlaceObjective;
 
     private void Start()
     {
         image = gameObject.GetComponent<Image>();
+        defaultObjectiveMat = objective.GetComponent<SpriteRenderer>().material;
         c = mainCam.backgroundColor;
     }
     
@@ -39,6 +43,10 @@ public class AssistHandler : MonoBehaviour
         mainCam.backgroundColor = assistOn ? Color.black : c;
         visual.SetActive(assistOn ? false : true);
         
+        // button change
+        GameObject myEventSystem = GameObject.Find("EventSystem");
+        myEventSystem .GetComponent<UnityEngine.EventSystems.EventSystem>().SetSelectedGameObject(null);
+        
     }
 
     private void Update()
@@ -48,7 +56,6 @@ public class AssistHandler : MonoBehaviour
         
         if (assistOn && !objectivePlaced)
         {
-            Debug.Log("assist on ");
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit2D hit = Physics2D.GetRayIntersection(ray,Mathf.Infinity);
             
@@ -58,21 +65,35 @@ public class AssistHandler : MonoBehaviour
                 placingObjective = true;
                 
             }
-
+            // placing objective
+            // set radius active
             if (placingObjective)
             {
-                //Debug.Log("mouse pos is " + mousePos);
                 radius.SetActive(true);
-                objective.transform.position = mousePos;
-                if (Input.GetButtonDown("Fire1"))
+                float dis = Vector3.Distance(radius.transform.position, objective.transform.position);
+                Debug.Log("dis: " + dis);
+                if (dis > 4f) // not in radius
                 {
-                    Debug.Log("clicked");
+                    objective.GetComponent<SpriteRenderer>().material = objectivePlacingMat;
+                    canPlaceObjective = false;
+                }
+                else  // in radius
+                {
+                    objective.GetComponent<SpriteRenderer>().material = defaultObjectiveMat;
+                    canPlaceObjective = true;
+
+                }
+                
+                objective.transform.position = mousePos;
+                if (Input.GetButtonDown("Fire1") && canPlaceObjective)
+                {
                     placingObjective = false;
                     objectivePlaced = true;
                 }
             }
         }
-
+        
+        
         if (assistOn && objectivePlaced)
         {
             radius.SetActive(false);
