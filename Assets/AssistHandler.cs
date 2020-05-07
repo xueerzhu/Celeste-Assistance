@@ -14,15 +14,30 @@ public class AssistHandler : MonoBehaviour
     public SearchandReplay search;
     public GameObject radius;
     public Material objectivePlacingMat;
+    public float radiusFloat = 5f;
 
     private Image image;
     private bool assistOn;
     private Color c = new Color();
     
-    private bool objectivePlaced;
-    private bool placingObjective;
-    private Material defaultObjectiveMat;
+    [Header("SerializedField")]
+    [SerializeField]
+    private bool objectivePlaced;  // controls obj following mouse, ray related code
+    [SerializeField]
+    private bool placingObjective; // placing obj down
+
+    [SerializeField]
     private bool canPlaceObjective;
+    [SerializeField]// valid according to radius check
+    private bool searching;  // is ghost search
+    
+    private Material defaultObjectiveMat;
+
+
+    private void Awake()
+    {
+        search.PrepareSearch();
+    }
 
     private void Start()
     {
@@ -54,51 +69,66 @@ public class AssistHandler : MonoBehaviour
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = -1;
         
-        if (assistOn && !objectivePlaced)
+        if (assistOn && (!objectivePlaced || searching))
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit2D hit = Physics2D.GetRayIntersection(ray,Mathf.Infinity);
             
-            if (hit.collider != null && hit.collider.transform == objective.transform)
+            if (Input.GetButtonDown("Fire1") && hit.collider != null && hit.collider.transform == objective.transform && !placingObjective)  // click on obj to star placing
             {
 
                 placingObjective = true;
                 
             }
-            // placing objective
-            // set radius active
-            if (placingObjective)
+            else
             {
-                radius.SetActive(true);
-                float dis = Vector3.Distance(radius.transform.position, objective.transform.position);
-                Debug.Log("dis: " + dis);
-                if (dis > 4f) // not in radius
+                // placing objective
+                // set radius active
+                if (placingObjective)
                 {
-                    objective.GetComponent<SpriteRenderer>().material = objectivePlacingMat;
-                    canPlaceObjective = false;
-                }
-                else  // in radius
-                {
-                    objective.GetComponent<SpriteRenderer>().material = defaultObjectiveMat;
-                    canPlaceObjective = true;
+                    radius.SetActive(true);
+                    float dis = Vector3.Distance(radius.transform.position, objective.transform.position);
+                    if (dis > radiusFloat) // not in radius
+                    {
+                        objective.GetComponent<SpriteRenderer>().material = objectivePlacingMat;
+                        canPlaceObjective = false;
+                    }
+                    else  // in radius
+                    {
+                        objective.GetComponent<SpriteRenderer>().material = defaultObjectiveMat;
+                        canPlaceObjective = true;
 
-                }
+                    }
                 
-                objective.transform.position = mousePos;
-                if (Input.GetButtonDown("Fire1") && canPlaceObjective)
-                {
-                    placingObjective = false;
-                    objectivePlaced = true;
+                    objective.transform.position = mousePos;  // obj follow mouse
+                
+                    if (Input.GetButtonDown("Fire1") && canPlaceObjective)
+                    {
+                        placingObjective = false;
+                        objectivePlaced = true;
+                        searching = false;
+                    }
                 }
             }
+            
         }
         
         
-        if (assistOn && objectivePlaced)
+        if (assistOn && objectivePlaced && !searching)
         {
+            Debug.Log("prepare called");
             radius.SetActive(false);
-            search.PrepareSearch();
-            search.PrepareObjective();
+            
+            // prepare new search
+            search.clearSearch();
+            search.PrepareObjectiveAndPlayer();
+            
+            if (search.searchisPrepared)
+            {
+                search.StartSearch();
+                searching = true;
+            }
+            
         }
 
         if (!assistOn)
