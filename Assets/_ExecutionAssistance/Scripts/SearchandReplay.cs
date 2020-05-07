@@ -50,7 +50,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
     bool isSearching = false;
     [SerializeField] bool isReplaying = false;
-    bool ghost = false;
+    bool ghost = true;  
 
     int spaceSearched = 0;
     float startTime = 0;
@@ -92,8 +92,9 @@ public partial class SearchandReplay : MonoBehaviour {
 
     WaitForEndOfFrame WaitEndOfFrame = new WaitForEndOfFrame();
 
-    private bool searchisPrepared = false;
-    private GameObject levelGeometry;
+    public bool searchisPrepared = false;
+    private GameObject levelGeometry;  // exclude star
+    private GameObject simStar;
 
     public struct State {
         // One of the possible action types
@@ -119,41 +120,6 @@ public partial class SearchandReplay : MonoBehaviour {
                       ", Climb: " + onGround);
         }
     }
-
-    /*private void Awake() {
-        // int to dash direction. Go to action struct for explanation
-        DashDirectionDict.Add(0, new Vector2(1, 0));
-        DashDirectionDict.Add(1, new Vector2(1, 1));
-        DashDirectionDict.Add(2, new Vector2(0, 1));
-        DashDirectionDict.Add(3, new Vector2(-1, 1));
-        DashDirectionDict.Add(4, new Vector2(-1, 0));
-        DashDirectionDict.Add(5, new Vector2(-1, -1));
-        DashDirectionDict.Add(6, new Vector2(0, -1));
-        DashDirectionDict.Add(7, new Vector2(1, -1));
-
-        // leave it = true so physics simulated normally in main scene
-        //Physics2D.autoSimulation = false;
-        mainScene = SceneManager.GetActiveScene();
-        simScene = SceneManager.CreateScene("sim-physics-scene", new CreateSceneParameters(LocalPhysicsMode.Physics2D));
-
-        PreparePhysicsScene();
-
-        // Set these when we have the simulation scene working
-        simMovement = simPlayer.GetComponent<Movement>();
-        simMovement.simulated = true;
-
-        playerMovement = mainPlayer.GetComponent<Movement>();
-
-        simCollision = simPlayer.GetComponent<Collision>();
-
-        mainPlayerRB = mainPlayer.GetComponent<Rigidbody2D>();
-        simPlayerRB = simPlayer.GetComponent<Rigidbody2D>();
-
-        simRenderer = simPlayer.GetComponentInChildren<SpriteRenderer>();
-        simRenderer.enabled = false;
-
-        PrepareAStar();
-    }*/
 
     public void PrepareSearch()
     {
@@ -235,12 +201,19 @@ public partial class SearchandReplay : MonoBehaviour {
         levelGeometry.GetComponentInChildren<SpriteRenderer>().enabled = false;
         
         levelGeometry.transform.name = "simLevel";
+        
+        simStar = Instantiate(star, star.transform.position, Quaternion.identity);
+        //simStar.transform.SetParent(levelGeometry.transform);
+        simStar.transform.name = "simStar";
     }
     
-    // reposition objective when assist objective has moved
-    public void PrepareObjective()
+    /// <summary>
+    /// Reset star and player for new search, API for AssistHandler
+    /// </summary>
+    public void PrepareObjectiveAndPlayer()
     {
-        levelGeometry.transform.position = levelToCopy.transform.position;
+        simStar.transform.position = star.transform.position;
+        simPlayer.transform.position = mainPlayer.transform.position;
     }
 
     //optimize here
@@ -316,7 +289,7 @@ public partial class SearchandReplay : MonoBehaviour {
         }
     }
 
-    void StartSearch() {
+    public void StartSearch() {
         reachedGoal = false;
         isReplaying = false;
         isSearching = true;
@@ -332,6 +305,7 @@ public partial class SearchandReplay : MonoBehaviour {
         mainPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
         simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
+    
 
     void printFoundPath() {
         Debug.Log("nodeReplayQueue is: ");
@@ -354,7 +328,20 @@ public partial class SearchandReplay : MonoBehaviour {
     float cost;
     State newState;
     private Node newNode;
+    
+    /// <summary>
+    /// clears prev search data for next search
+    /// </summary>
+    public void clearSearch()
+    {
+        priorityQueue.Clear();
+        currentNode = null;
+        currentState = new State();
+        exploredStack.Clear();
+        finalNode = null;
+        replayActionText.text = "Action";
 
+    }
     private void RunAStar() {
         for (int i = 0; i < simulationSteps; i++) {
             print("The priorityQueue length:" + priorityQueue.Count);
