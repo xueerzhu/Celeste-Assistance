@@ -50,7 +50,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
     bool isSearching = false;
     [SerializeField] bool isReplaying = false;
-    bool ghost = true;  
+    bool ghost = true;
 
     int spaceSearched = 0;
     float startTime = 0;
@@ -160,7 +160,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
             searchisPrepared = true;
         }
-        
+
     }
 
     // Action Sets
@@ -199,14 +199,14 @@ public partial class SearchandReplay : MonoBehaviour {
 
         levelGeometry = Instantiate(levelToCopy, levelToCopy.transform.position, Quaternion.identity);
         levelGeometry.GetComponentInChildren<SpriteRenderer>().enabled = false;
-        
+
         levelGeometry.transform.name = "simLevel";
-        
+
         simStar = Instantiate(star, star.transform.position, Quaternion.identity);
         //simStar.transform.SetParent(levelGeometry.transform);
         simStar.transform.name = "simStar";
     }
-    
+
     /// <summary>
     /// Reset star and player for new search, API for AssistHandler
     /// </summary>
@@ -258,7 +258,7 @@ public partial class SearchandReplay : MonoBehaviour {
 
             HandleAStart();
         }
-        
+
     }
 
     void HandleAStart() {
@@ -277,6 +277,7 @@ public partial class SearchandReplay : MonoBehaviour {
             else
             {
                 simRenderer.enabled = true;
+                GameObject.Find("simPlayer").transform.GetComponent<Movement>().enabled = false;
                 StartCoroutine(ReplayFromNodeActionsGhost());
             }
         }
@@ -305,7 +306,7 @@ public partial class SearchandReplay : MonoBehaviour {
         mainPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
         simPlayerRB.constraints = RigidbodyConstraints2D.FreezeRotation;
     }
-    
+
 
     void printFoundPath() {
         Debug.Log("nodeReplayQueue is: ");
@@ -328,7 +329,7 @@ public partial class SearchandReplay : MonoBehaviour {
     float cost;
     State newState;
     private Node newNode;
-    
+
     /// <summary>
     /// clears prev search data for next search
     /// </summary>
@@ -628,7 +629,7 @@ public partial class SearchandReplay : MonoBehaviour {
             simPhysicsScene2D.Simulate(Time.fixedDeltaTime);
         }
     }
-    
+
 
     // // The three different actions that are slightly different.
     // IEnumerator ExecuteWalkForNFrames(int dir, int frameCount, Movement agentMovement) {
